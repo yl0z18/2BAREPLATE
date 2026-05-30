@@ -6,10 +6,18 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
   const steps = recipe.steps;
   const [i, setI] = useState(startStep || 0);
   const [timerAdj, setTimerAdj] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const step = steps[i];
   const start = useRef(null);
 
-  useEffect(() => { setTimerAdj(0); }, [i]);
+  useEffect(() => { setTimerAdj(0); setRunning(false); setElapsed(0); }, [i]);
+
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [running]);
 
   const SIZES = ['s', 'm', 'l'];
   const ci = Math.max(0, SIZES.indexOf(textSize));
@@ -38,8 +46,10 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
 
   const baseSecs = (step.timer ? step.timer.mins : 0) * 60;
   const totalSecs = Math.max(0, baseSecs + timerAdj);
-  const displayM = Math.floor(totalSecs / 60);
-  const displayS = totalSecs % 60;
+  const remaining = Math.max(0, totalSecs - elapsed);
+  useEffect(() => { if (running && remaining === 0) setRunning(false); }, [remaining, running]);
+  const displayM = Math.floor(remaining / 60);
+  const displayS = remaining % 60;
 
   const readScale = ci === 0 ? 0.9 : ci === 1 ? 1 : 1.15;
 
@@ -87,7 +97,9 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
               </div>
             </div>
 
-            <button className="bp-cook-timer-play" style={{ width: '64px', height: '64px' }}><Icon name="play" size={26} strokeWidth={2.4} /></button>
+            <button className="bp-cook-timer-play" style={{ width: '64px', height: '64px' }} onClick={() => setRunning(r => !r)}>
+              <Icon name={running ? 'pause' : 'play'} size={26} strokeWidth={2.4} />
+            </button>
           </div>}
 
         {/* If this step has a timer, preview the next step so the cook can get a

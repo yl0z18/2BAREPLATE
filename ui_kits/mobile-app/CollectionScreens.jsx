@@ -97,13 +97,19 @@ function CollectionDetail({ collection, recipes, onBack, onOpen, onAddRecipes, o
           ? <button className="bp-link" onClick={() => setManage(m => !m)}>{manage ? 'Done' : 'Manage'}</button>
           : null} />
       <div className="bp-screen-pad">
-        <div className="bp-coll-head">
+      <div className="bp-coll-head" style={{ marginTop: 8 }}>
           <div className={'bp-coll-tile lg' + (collection.photo ? ' photo' : '')}>
             {collection.photo
               ? <img className="bp-coll-tile-img" src={collection.photo} alt="" />
               : <Icon name={collection.icon || 'folder'} size={26} strokeWidth={1.9} color="var(--accent-deep)" />}
           </div>
-          <h1 className="bp-h1 bp-coll-title" onClick={() => onRename && onRename(collection)}>{collection.name}</h1>
+          <div className="bp-coll-title-row">
+            <h1 className="bp-h1 bp-coll-title">{collection.name}</h1>
+            {onRename &&
+              <button className="bp-coll-rename-btn" onClick={() => onRename(collection)} aria-label="Rename collection">
+                <Icon name="pencil" size={15} strokeWidth={2.2} color="var(--fg2)" />
+              </button>}
+          </div>
         </div>
         <div className="bp-subrow">
           <span className="bp-subrow-count">{inCol.length} {inCol.length === 1 ? 'recipe' : 'recipes'}</span>
@@ -132,6 +138,10 @@ function CollectionDetail({ collection, recipes, onBack, onOpen, onAddRecipes, o
                       ? <span className="bp-cooked"><Icon name="chef-hat" size={17} strokeWidth={2} />{r.cooked}×</span>
                       : <span className="bp-cooked-dash">—</span>)}
                   </button>
+                  {manage &&
+                    <button className="bp-manage-edit-btn" onClick={() => onOpen(r)} aria-label={'Edit ' + r.title}>
+                      <Icon name="pencil" size={15} strokeWidth={2.2} color="var(--fg2)" />
+                    </button>}
                 </div>
               ))}
             </div>}
@@ -149,40 +159,25 @@ const COLL_ICONS = ['folder', 'utensils', 'heart', 'bookmark', 'cookie', 'soup',
 function NewCollectionSheet({ open, onClose, onCreate }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('folder');
-  const [photo, setPhoto] = useState(null);
-  const fileRef = useRef(null);
-  useEffect(() => { if (open) { setName(''); setIcon('folder'); setPhoto(null); } }, [open]);
-  const pickFile = () => fileRef.current && fileRef.current.click();
-  const onFile = (e) => { const f = e.target.files && e.target.files[0]; if (f) setPhoto(URL.createObjectURL(f)); e.target.value = ''; };
-  const create = () => { const n = name.trim(); if (n) { onCreate(n, icon, photo); } };
+  useEffect(() => { if (open) { setName(''); setIcon('folder'); } }, [open]);
+  const create = () => { const n = name.trim(); if (n) { onCreate(n, icon, null); } };
   return (
     <Sheet open={open} onClose={onClose} title="New Collection">
       <div className="bp-newcoll-head">
-        <button type="button" className={'bp-newcoll-preview' + (photo ? ' has-photo' : '')} onClick={pickFile} aria-label="Add a cover photo">
-          {photo
-            ? <img className="bp-newcoll-photo" src={photo} alt="" />
-            : <Icon name={icon} size={26} strokeWidth={1.9} color="var(--accent-deep)" />}
-          <span className="bp-newcoll-cam"><Icon name="camera" size={12} strokeWidth={2.4} color="var(--on-accent)" /></span>
-        </button>
+      <div className="bp-newcoll-preview">
+          <Icon name={icon} size={26} strokeWidth={1.9} color="var(--accent-deep)" />
+        </div>
         <input className="bp-add-input" placeholder="Collection name" value={name}
           autoFocus onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && create()} />
-      </div>
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
-
-      <div className="bp-newcoll-cover-row">
-        <button className="bp-link bp-add-item" onClick={pickFile}>
-          <Icon name="image" size={16} strokeWidth={2.2} />{photo ? 'Change cover photo' : 'Upload a cover photo'}
-        </button>
-        {photo && <button className="bp-link bp-newcoll-remove" onClick={() => setPhoto(null)}>Remove</button>}
       </div>
 
       <div className="bp-suggest-label">Choose an icon</div>
       <div className="bp-icon-grid">
         {COLL_ICONS.map(ic => (
-          <button key={ic} className={'bp-icon-opt' + (icon === ic && !photo ? ' sel' : '')} onClick={() => { setIcon(ic); setPhoto(null); }} aria-label={ic}>
-            <Icon name={ic} size={22} strokeWidth={1.9} color={icon === ic && !photo ? 'var(--accent-deep)' : 'var(--fg2)'} />
-          </button>
+          <button key={ic} className={'bp-icon-opt' + (icon === ic ? ' sel' : '')} onClick={() => setIcon(ic)} aria-label={ic}>
+          <Icon name={ic} size={22} strokeWidth={1.9} color={icon === ic ? 'var(--accent-deep)' : 'var(--fg2)'} />
+        </button>
         ))}
       </div>
       <button className="bp-cta bp-newcoll-cta" disabled={!name.trim()} onClick={create}>Create Collection</button>
@@ -249,4 +244,18 @@ function Toast({ message }) {
   );
 }
 
-Object.assign(window, { Collections, CollectionDetail, NewCollectionSheet, AddToCollectionSheet, PickCollectionSheet, Toast });
+function RenameCollectionSheet({ open, onClose, collection, onRename }) {
+  const [name, setName] = useState('');
+  useEffect(() => { if (open && collection) setName(collection.name); }, [open]);
+  const save = () => { if (name.trim()) { onRename(collection.id, name.trim()); onClose(); } };
+  return (
+    <Sheet open={open} onClose={onClose} title="Rename Collection">
+      <input className="bp-add-input" value={name} autoFocus
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && save()} />
+      <button className="bp-cta bp-sheet-cta" disabled={!name.trim()} onClick={save}>Save</button>
+    </Sheet>
+  );
+}
+
+Object.assign(window, { Collections, CollectionDetail, NewCollectionSheet, AddToCollectionSheet, PickCollectionSheet, Toast, RenameCollectionSheet });

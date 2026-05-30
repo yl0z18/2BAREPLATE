@@ -58,6 +58,7 @@ function App() {
   const [recipesNonce, setRecipesNonce] = useState(0);
   const [confirm, setConfirm] = useState(null); // {title, message, confirmLabel, danger, action}
   const [editingNew, setEditingNew] = useState(false); // true while writing a brand-new recipe
+  const [renamingCol, setRenamingCol] = useState(null);
 
   const collection = collections.find((c) => c.id === colId) || null;
   const flashToast = (msg) => {
@@ -381,7 +382,6 @@ function App() {
       content = (
         <RecipeDetail
           recipe={selected}
-          units={units}
           onBack={() => setView(detailFrom)}
           onEdit={() => setView('edit')}
           onShare={() => setOverlay('share')}
@@ -438,6 +438,7 @@ function App() {
           onOpen={(r) => openRecipe(r, 'collection')}
           onAddRecipes={() => setOverlay('addtocollection')}
           onRemove={removeFromCollection}
+          onRename={(c) => setRenamingCol(c)}
         />
       );
     else if (view === 'search')
@@ -487,10 +488,11 @@ function App() {
         units={units}
         language={language}
         langLabel={(LANG_OPTS.find((l) => l.id === language) || {}).label}
-        onUnits={() => setOverlay('units')}
-        onLanguage={() => setOverlay('language')}
+              onLanguage={() => setOverlay('language')}
         onDeleteAll={deleteAllData}
         onSignIn={() => setOverlay('signin')}
+        onBackup={() => flashToast('Coming soon')}
+        onPrivacy={() => flashToast('Coming soon')}
       />
     );
   }
@@ -587,6 +589,12 @@ function App() {
         options={LANG_OPTS}
         value={language}
         onPick={setLanguage}
+      />
+      <RenameCollectionSheet
+        open={!!renamingCol}
+        onClose={() => setRenamingCol(null)}
+        collection={renamingCol}
+        onRename={(id, name) => setCollections(cs => cs.map(c => c.id === id ? { ...c, name } : c))}
       />
 
       <Toast message={toast} />

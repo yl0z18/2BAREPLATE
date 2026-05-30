@@ -124,7 +124,7 @@ function RecipeDetail({ recipe, units, onBack, onEdit, onShare, onCook, onAdjust
   const toTop = () => { if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' }); };
   // Reddit-style: reveal the scroll-to-top affordance as soon as the user has
   // scrolled a bit, regardless of how far down the page they are.
-  const onScroll = (e) => setShowTop(e.target.scrollTop > 220);
+  const onScroll = (e) => setShowTop(e.target.scrollTop > 40);
 
   return (
     <div className="bp-screen-inner">
@@ -142,7 +142,7 @@ function RecipeDetail({ recipe, units, onBack, onEdit, onShare, onCook, onAdjust
               <button className="bp-round-btn" onClick={onShare}><Icon name="share" size={18} strokeWidth={2.2} /></button>
             </div>
           </div>
-          <button className="bp-photo-cam"><Icon name="camera" size={18} strokeWidth={2} /></button>
+          <button className="bp-photo-cam" onClick={onEdit}><Icon name="camera" size={18} strokeWidth={2} /></button>
         </div>
 
         <div className="bp-screen-pad bp-detail-pad">
@@ -234,6 +234,9 @@ function convertAmt(amt, metric) {
 }
 
 function IngredientsTab({ recipe, factor, metric }) {
+  const srcUrl = recipe.source && /\.[a-z]{2,}/i.test(recipe.source)
+    ? 'https://' + recipe.source.replace(/^https?:\/\//, '')
+    : null;
   return (
     <div className="bp-tabpanel">
       {recipe.sections.map((sec, i) => (
@@ -248,7 +251,10 @@ function IngredientsTab({ recipe, factor, metric }) {
         </div>
       ))}
       <div className="bp-tab-footer">
-        <button className="bp-link"><Icon name="external-link" size={15} strokeWidth={2} />View Original</button>
+      <button className="bp-link" onClick={() => srcUrl && window.open(srcUrl, '_blank')}
+          style={!srcUrl ? { opacity: 0.35, pointerEvents: 'none' } : {}}>
+          <Icon name="external-link" size={15} strokeWidth={2} />View Original
+        </button>
       </div>
     </div>
   );

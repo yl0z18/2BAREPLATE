@@ -1935,8 +1935,31 @@ svg[data-fill='1'] {
   margin: 4px 0 2px;
 }
 
+.bp-coll-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .bp-coll-title {
   margin: 0;
+}
+
+bp-coll-rename-btn {
+  flex: 0 0 auto;
+  padding: 4px;
+  color: var(--fg2);
+  opacity: 0.7;
+}
+
+.bp-coll-rename-btn:active {
+  opacity: 1;
+}
+
+.bp-manage-edit-btn {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  color: var(--fg2);
 }
 
 .bp-back-link {

@@ -186,7 +186,7 @@ function Toggle({ on, onChange }) {
   );
 }
 
-function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, units, language, langLabel, onUnits, onLanguage, onDeleteAll, onSignIn }) {
+function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, units, language, langLabel, onUnits, onLanguage, onDeleteAll, onSignIn, onBackup, onPrivacy }) {
   const [autosave, setAutosave] = useState(true);
   return (
     <div className="bp-screen-inner">
@@ -229,13 +229,14 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, units,
             <span className="bp-set-label">Auto-Save</span>
             <Toggle key={'as-' + autosave} on={autosave} onChange={setAutosave} />
           </div>
+          <Row icon="ruler" label="Units" value={units === 'metric' ? 'Metric' : 'US'} onClick={onUnits} />
           <Row icon="globe" label="Language" value={langLabel || 'English'} onClick={onLanguage} last />
         </div>
 
         <div className="bp-set-group-label">Account</div>
         <div className="bp-set-card">
-          <Row icon="cloud" label="Backup" value="On device" />
-          <Row icon="shield" label="Privacy" last />
+        <Row icon="cloud" label="Backup" value="On device" onClick={onBackup} />
+          <Row icon="shield" label="Privacy" onClick={onPrivacy} last />
         </div>
 
         <div className="bp-set-group-label danger">Danger Zone</div>
@@ -311,7 +312,7 @@ function ExtractionFailure({ url, onClose, onRetry, onScan, onWrite }) {
         <div className="bp-fail-title">This page is behind a paywall</div>
         <div className="bp-fail-sub">Try pasting the recipe text directly, or use another method.</div>
         <div className="bp-fail-opts">
-          <button className="bp-cta bp-fail-primary"><Icon name="clipboard" size={19} strokeWidth={2} />Paste the recipe text</button>
+        <button className="bp-cta bp-fail-primary" onClick={onWrite}><Icon name="clipboard" size={19} strokeWidth={2} />Paste the recipe text</button>
           <button className="bp-fail-opt" onClick={onScan}><Icon name="camera" size={19} strokeWidth={1.9} />Scan with camera</button>
           <button className="bp-fail-opt" onClick={onWrite}><Icon name="pencil" size={18} strokeWidth={1.9} />Write it myself</button>
           <button className="bp-fail-opt" onClick={onRetry}><Icon name="rotate-ccw" size={18} strokeWidth={1.9} />Try again</button>

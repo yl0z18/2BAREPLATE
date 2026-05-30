@@ -87,8 +87,12 @@ function EditRecipe({ recipe, onCancel, onSave }) {
   const [source, setSource] = useState(recipe.source);
   const [time, setTime] = useState(recipe.time);
   const [serves, setServes] = useState(recipe.serves);
+  const [photo, setPhoto] = useState(recipe.photo || '');
   const [sections, setSections] = useState(() => clone(recipe.sections && recipe.sections.length ? recipe.sections : [{ label: 'Main', items: [{ name: '', amt: '' }] }]));
   const [steps, setSteps] = useState(() => clone(recipe.steps && recipe.steps.length ? recipe.steps : [{ text: '', pills: [], timer: null }]));
+  const photoRef = useRef(null);
+  const onPhotoFile = (e) => { const f = e.target.files && e.target.files[0]; if (f) setPhoto(URL.createObjectURL(f)); e.target.value = ''; };
+
 
   const setItem = (si, ii, key, val) => setSections(s => s.map((sec, i) => i !== si ? sec
     : { ...sec, items: sec.items.map((it, j) => j !== ii ? it : { ...it, [key]: val }) }));
@@ -101,7 +105,7 @@ function EditRecipe({ recipe, onCancel, onSave }) {
   const removeStep = (i) => setSteps(st => st.filter((_, j) => j !== i));
   const addStep = () => setSteps(st => [...st, { text: '', pills: [], timer: null }]);
 
-  const save = () => onSave({ ...recipe, title, source, time, serves, sections, steps });
+  const save = () => onSave({ ...recipe, title, source, time, serves, sections, steps, photo });
 
   return (
     <div className="bp-screen-inner" data-screen-label="Edit Recipe">
@@ -111,10 +115,13 @@ function EditRecipe({ recipe, onCancel, onSave }) {
         right={<button className="bp-link" onClick={save}>Save</button>} />
       <div className="bp-screen-pad bp-edit">
         <div className="bp-edit-photo">
-          {recipe.photo
-            ? <img src={recipe.photo} alt="" onError={(e) => { e.target.style.display = 'none'; }} />
+        {photo
+            ? <img src={photo} alt="" onError={(e) => { e.target.style.display = 'none'; }} />
             : <div className="bp-edit-photo-ph"><BowlMark size={54} color="var(--accent)" /></div>}
-          <button className="bp-edit-photo-btn"><Icon name="camera" size={17} strokeWidth={2} />Change photo</button>
+          <input ref={photoRef} type="file" accept="image/*" hidden onChange={onPhotoFile} />
+          <button className="bp-edit-photo-btn" onClick={() => photoRef.current && photoRef.current.click()}>
+            <Icon name="camera" size={17} strokeWidth={2} />Change photo
+          </button>
         </div>
 
         <div className="bp-field">
