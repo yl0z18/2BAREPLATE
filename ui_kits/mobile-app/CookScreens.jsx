@@ -138,8 +138,8 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function DoneCooking({ recipe, onMarkCooked, onGrocery, onShare, onBack, onBackToSteps }) {
-  const [milestone] = useState(() => (recipe.cooked || 0) + 1);
+  function DoneCooking({ recipe, milestone: milestoneProp, onMarkCooked, onGrocery, onShare, onBack, onBackToSteps }) {
+    const milestone = milestoneProp != null ? milestoneProp : (recipe.cooked || 0) + 1;
   const [marked, setMarked] = useState(false);
   const doMark = () => { if (marked) return; setMarked(true); onMarkCooked(); };
   return (

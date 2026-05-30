@@ -1367,7 +1367,7 @@ svg[data-fill='1'] {
 
 .bp-groc-row {
   display: grid;
-  grid-template-columns: 26px 1fr auto;
+  grid-template-columns: 26px 1fr auto auto;
   align-items: baseline;
   gap: 4px 12px;
   padding: 10px 0;
@@ -1406,7 +1406,7 @@ svg[data-fill='1'] {
 }
 
 .bp-groc-src {
-  grid-column: 2 / 4;
+  grid-column: 2 / 5;
   font-size: 12px;
   color: var(--fg3);
   font-weight: 500;
@@ -1426,6 +1426,38 @@ svg[data-fill='1'] {
 
 .bp-add-item {
   padding: 10px 0;
+}
+
+.bp-groc-edit-btn {
+  align-self: center;
+  padding: 4px 6px;
+  color: var(--fg3);
+  opacity: 0.6;
+  grid-row: 1;
+  grid-column: 4;
+}
+.bp-groc-edit-btn:active { opacity: 1; }
+
+.bp-groc-edit-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  margin: 4px 0;
+}
+.bp-groc-edit-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+.bp-groc-edit-cancel {
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--fg2);
+  white-space: nowrap;
 }
 
 /* swipe-to-delete */

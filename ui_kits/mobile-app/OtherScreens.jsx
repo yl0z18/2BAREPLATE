@@ -16,9 +16,13 @@ const GROC_UNITS = [
   { id: 'other', label: 'Other…' },
 ];
 
-function GroceryRow({ item, onToggle, onDelete }) {
+
+function GroceryRow({ item, onToggle, onDelete, onEdit }) {
   const REVEAL = 84;
   const [dx, setDx] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editAmt, setEditAmt] = useState('');
   const startX = useRef(null);
   const base = useRef(0);
   const moved = useRef(false);
@@ -39,9 +43,38 @@ function GroceryRow({ item, onToggle, onDelete }) {
   };
   const click = () => {
     if (moved.current) return;
-    if (base.current < 0) { base.current = 0; setDx(0); return; }  // first tap closes the swipe
+    if (base.current < 0) { base.current = 0; setDx(0); return; }
     onToggle();
   };
+
+  const startEdit = (e) => {
+    e.stopPropagation();
+    setEditName(item.name);
+    setEditAmt(item.amt || '');
+    setEditing(true);
+  };
+  const saveEdit = () => {
+    if (editName.trim()) { onEdit(editName.trim(), editAmt.trim()); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <div className="bp-groc-edit-card">
+        <input className="bp-groc-add-name" value={editName} autoFocus
+          onChange={e => setEditName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditing(false); }} />
+        <div className="bp-groc-edit-row">
+          <input className="bp-groc-add-amt" placeholder="Amount" value={editAmt}
+            onChange={e => setEditAmt(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') saveEdit(); }} />
+          <button className="bp-groc-add-go" onClick={saveEdit} disabled={!editName.trim()}>
+            <Icon name="check" size={18} strokeWidth={2.6} color="var(--on-accent)" />Save
+          </button>
+          <button className="bp-groc-edit-cancel" onClick={() => setEditing(false)}>Cancel</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bp-groc-swipe">
@@ -49,7 +82,7 @@ function GroceryRow({ item, onToggle, onDelete }) {
         style={{ opacity: dx < 0 ? 1 : 0, transition: startX.current == null ? 'opacity 0.2s' : 'none' }}>
         <Icon name="trash-2" size={20} strokeWidth={2} color="#fff" />
       </button>
-      <button
+      <div
         className={'bp-groc-row' + (item.checked ? ' checked' : '')}
         style={{ transform: `translateX(${dx}px)`, transition: startX.current == null ? 'transform 0.22s cubic-bezier(0.22,0.61,0.36,1)' : 'none' }}
         onClick={click}
@@ -64,14 +97,53 @@ function GroceryRow({ item, onToggle, onDelete }) {
         <span className="bp-groc-name">{item.name}</span>
         <span className="bp-groc-amt">{item.amt}</span>
         <span className="bp-groc-src">{item.src}</span>
-      </button>
+        <button className="bp-groc-edit-btn" onClick={startEdit} aria-label={'Edit ' + item.name} tabIndex={-1}>
+          <Icon name="pencil" size={14} strokeWidth={2.2} color="var(--fg3)" />
+        </button>
+      </div>
     </div>
   );
 }
 
-function GroceryList({ data, onToggle, onAddItem, onClearChecked, onToggleAll, onDeleteList, onDeleteItem }) {
+function GroceryHome({ lists, onOpen, onNew }) {
+  return (
+    <div className="bp-screen-inner" data-screen-label="Grocery">
+      <NavBar large right={<IconButton name="plus" onClick={onNew} />} />
+      <div className="bp-screen-pad">
+        <h1 className="bp-h1 bp-screen-title">Grocery</h1>
+        <div className="bp-subrow">
+          <span className="bp-subrow-count">{lists.length} {lists.length === 1 ? 'list' : 'lists'}</span>
+        </div>
+        {lists.length === 0
+          ? <div className="bp-coll-empty">
+              <div className="bp-coll-tile big"><Icon name="shopping-basket" size={30} strokeWidth={1.8} color="var(--accent-deep)" /></div>
+              <div className="bp-empty-title">No lists yet</div>
+              <div className="bp-empty-sub">Create a grocery list to get started.</div>
+            </div>
+          : <div className="bp-recipe-list">
+              {lists.map(l => {
+                const count = l.groups.reduce((n, g) => n + g.items.length, 0);
+                return (
+                  <button key={l.id} className="bp-recipe-card" onClick={() => onOpen(l)}>
+                    <div className="bp-recipe-tap">
+                      <div className="bp-recipe-body">
+                        <div className="bp-recipe-title">{l.name}</div>
+                        <div className="bp-recipe-meta">{count === 0 ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}</div>
+                      </div>
+                      <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>}
+      </div>
+    </div>
+  );
+}
+
+function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEditItem, onClearChecked, onToggleAll, onDeleteList, onDeleteItem }) {
   const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
+  const [itemName, setItemName] = useState('');
   const [amt, setAmt] = useState('');
   const [unit, setUnit] = useState('none');
   const [customUnit, setCustomUnit] = useState('');
@@ -83,14 +155,14 @@ function GroceryList({ data, onToggle, onAddItem, onClearChecked, onToggleAll, o
   const allChecked = !empty && checked === all.length;
 
   const openAdd = () => { setAdding(true); setTimeout(() => nameRef.current && nameRef.current.focus(), 60); };
-  const closeAdd = () => { setAdding(false); setName(''); setAmt(''); setUnit('none'); setCustomUnit(''); };
+  const closeAdd = () => { setAdding(false); setItemName(''); setAmt(''); setUnit('none'); setCustomUnit(''); };
   const submit = () => {
-    const n = name.trim();
+    const n = itemName.trim();
     if (!n) return;
     const u = unit === 'other' ? customUnit.trim() : (unit !== 'none' ? unit : '');
     const fullAmt = [amt.trim(), u].filter(Boolean).join(' ');
     onAddItem(n, fullAmt);
-    setName(''); setAmt(''); setUnit('none'); setCustomUnit('');
+    setItemName(''); setAmt(''); setUnit('none'); setCustomUnit('');
     setTimeout(() => nameRef.current && nameRef.current.focus(), 20);
   };
   const pickUnit = (v) => {
@@ -100,12 +172,14 @@ function GroceryList({ data, onToggle, onAddItem, onClearChecked, onToggleAll, o
 
   return (
     <div className="bp-screen-inner" data-screen-label="Grocery List">
-      <NavBar large right={<div className="bp-nav-actions">
-      <IconButton name="plus" onClick={openAdd} />
-        <IconButton name="trash-2" onClick={onDeleteList} color={empty ? 'var(--fg3)' : undefined} />
-      </div>} />
+      <NavBar large
+        left={<button className="bp-link bp-back-link" onClick={onBack}><Icon name="chevron-left" size={20} strokeWidth={2.4} />Grocery</button>}
+        right={<div className="bp-nav-actions">
+          <IconButton name="plus" onClick={openAdd} />
+          <IconButton name="trash-2" onClick={onDeleteList} color={empty ? 'var(--fg3)' : undefined} />
+        </div>} />
       <div className="bp-screen-pad">
-        <h1 className="bp-h1 bp-screen-title">Grocery List</h1>
+      <h1 className="bp-h1 bp-screen-title">{listName || 'Grocery List'}</h1>
         <div className="bp-subrow">
           <span className="bp-subrow-count">{empty ? 'No items yet' : `${checked}/${all.length} items checked`}</span>
           {!empty && <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button>}
@@ -119,8 +193,8 @@ function GroceryList({ data, onToggle, onAddItem, onClearChecked, onToggleAll, o
                 <Icon name="x" size={18} strokeWidth={2.4} color="var(--fg2)" />
               </button>
             </div>
-            <input ref={nameRef} className="bp-groc-add-name" placeholder="Item name" value={name}
-              onChange={e => setName(e.target.value)}
+            <input ref={nameRef} className="bp-groc-add-name" placeholder="Item name" value={itemName}
+              onChange={e => setItemName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') closeAdd(); }} />
             <div className="bp-groc-add-row">
               <input className="bp-groc-add-amt" placeholder="Amount" value={amt} inputMode="decimal"
@@ -139,7 +213,7 @@ function GroceryList({ data, onToggle, onAddItem, onClearChecked, onToggleAll, o
                       <Icon name="chevron-down" size={15} strokeWidth={2} color="var(--fg3)" />
                     </React.Fragment>}
               </div>
-              <button className="bp-groc-add-go" onClick={submit} disabled={!name.trim()} aria-label="Add item">
+              <button className="bp-groc-add-go" onClick={submit} disabled={!itemName.trim()} aria-label="Add item">
                 <Icon name="plus" size={18} strokeWidth={2.6} color="var(--on-accent)" />Add
               </button>
             </div>
@@ -156,7 +230,7 @@ function GroceryList({ data, onToggle, onAddItem, onClearChecked, onToggleAll, o
                 <div key={gi} className="bp-aisle">
                   <div className="bp-label-row">{g.aisle}</div>
                   {g.items.map((it, ii) => (
-                    <GroceryRow key={ii} item={it} onToggle={() => onToggle(gi, ii)} onDelete={() => onDeleteItem(gi, ii)} />
+                    <GroceryRow key={ii} item={it} onToggle={() => onToggle(gi, ii)} onDelete={() => onDeleteItem(gi, ii)} onEdit={(n, a) => onEditItem(gi, ii, n, a)} />
                   ))}
                 </div>
               ))}
@@ -186,7 +260,7 @@ function Toggle({ on, onChange }) {
   );
 }
 
-function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, units, language, langLabel, onUnits, onLanguage, onDeleteAll, onSignIn, onBackup, onPrivacy }) {
+function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, language, langLabel, onLanguage, onDeleteAll, onSignIn, onBackup, onPrivacy }) {
   const [autosave, setAutosave] = useState(true);
   return (
     <div className="bp-screen-inner">
@@ -229,7 +303,7 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, units,
             <span className="bp-set-label">Auto-Save</span>
             <Toggle key={'as-' + autosave} on={autosave} onChange={setAutosave} />
           </div>
-          <Row icon="ruler" label="Units" value={units === 'metric' ? 'Metric' : 'US'} onClick={onUnits} />
+          <Row icon="globe" label="Language" value={langLabel || 'English'} onClick={onLanguage} last />
           <Row icon="globe" label="Language" value={langLabel || 'English'} onClick={onLanguage} last />
         </div>
 
@@ -339,4 +413,4 @@ function SignInSheet({ open, onClose, count }) {
   );
 }
 
-Object.assign(window, { GroceryList, Profile, AddRecipeSheet, ExtractionLoading, ExtractionFailure, SignInSheet });
+Object.assign(window, { GroceryHome, GroceryList, Profile, AddRecipeSheet, ExtractionLoading, ExtractionFailure, SignInSheet });

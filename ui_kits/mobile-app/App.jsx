@@ -46,9 +46,10 @@ function App() {
   const [selected, setSelected] = useState(null);
   const [overlay, setOverlay] = useState(null); // add | signin | collections | sortfilter | share | voice | grocerytarget | units | language | ...
   const [modal, setModal] = useState(null); // {type:'loading'|'fail', url}
-  const [grocery, setGrocery] = useState(() =>
-    JSON.parse(JSON.stringify(GROCERY))
-  );
+  const [groceryLists, setGroceryLists] = useState(() => [
+    { id: 'g0', name: 'My List', groups: JSON.parse(JSON.stringify(GROCERY)) }
+  ]);
+  const [groceryListId, setGroceryListId] = useState(null); // null = home
   const [recipes, setRecipes] = useState(RECIPES);
   const [collections, setCollections] = useState(COLLECTIONS);
   const [colId, setColId] = useState(null); // active collection id
@@ -386,6 +387,7 @@ function App() {
           onEdit={() => setView('edit')}
           onShare={() => setOverlay('share')}
           onCook={() => {
+            setCookMilestone((selected.cooked || 0) + 1);
             setCookAtEnd(false);
             setView('cook');
           }}
@@ -408,6 +410,7 @@ function App() {
       content = (
         <DoneCooking
           recipe={selected}
+          milestone={cookMilestone}
           onMarkCooked={markCooked}
           onGrocery={() => setOverlay('grocerytarget')}
           onShare={() => setOverlay('share')}
