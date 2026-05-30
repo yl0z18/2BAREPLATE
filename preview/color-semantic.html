@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 24px 32px; }
+  .group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg3); margin: 0 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .chip { height: 52px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .name { font-size: 13px; font-weight: 600; margin-top: 7px; }
+  .desc { font-size: 11px; color: var(--fg3); font-weight: 600; }
+  .sep { height: 18px; }
+</style>
+</head>
+<body>
+  <div class="group-label">Follows the active theme</div>
+  <div class="grid">
+    <div>
+      <div class="chip" style="background:var(--timer); color:var(--on-accent)">timer</div>
+      <div class="name">--timer</div>
+      <div class="desc">= accent</div>
+    </div>
+    <div>
+      <div class="chip" style="background:var(--timer-bg); color:var(--accent-deep)">timer-bg</div>
+      <div class="name">--timer-bg</div>
+      <div class="desc">= accent-soft</div>
+    </div>
+    <div>
+      <div class="chip" style="background:var(--bg); color:var(--success); border:1px solid var(--border)">success ✓</div>
+      <div class="name">--success</div>
+      <div class="desc">= accent-deep</div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="group-label">Fixed — never themed</div>
+  <div class="grid">
+    <div>
+      <div class="chip" style="background:var(--danger); color:#fff">danger</div>
+      <div class="name">--danger</div>
+      <div class="desc">delete · destructive</div>
+    </div>
+    <div>
+      <div class="chip" style="background:var(--danger-bg); color:var(--danger)">danger-bg</div>
+      <div class="name">--danger-bg</div>
+      <div class="desc">destructive wash</div>
+    </div>
+    <div>
+      <div class="chip" style="background:#fff; color:#1C1A17; border:1px solid var(--border)">on white</div>
+      <div class="name">background</div>
+      <div class="desc">never theme-tinted</div>
+    </div>
+  </div>
+</body>
+</html>

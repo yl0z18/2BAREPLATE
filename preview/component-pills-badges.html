@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 22px 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; border-radius: var(--r-pill); padding: 7px 14px; }
+  .ingredient { background: transparent; color: var(--fg2); padding: 4px 0; font-weight: 600; }
+  .ingredient::before { content: "•"; color: var(--accent); margin-right: 7px; font-weight: 700; }
+  .timer { background: var(--timer-bg); color: #8A5A12; }
+  .flag { background: var(--surface); color: var(--fg2); font-size: 13px; }
+  .flag i { width: 15px; height: 15px; }
+  .review { background: var(--accent-soft); color: var(--accent-deep); }
+  .cooked { background: var(--accent-soft); color: var(--accent-deep); font-weight: 700; }
+  .cooked i, .timer i { width: 15px; height: 15px; }
+  .lbl { font-size: 11px; color: var(--fg3); font-weight: 700; width: 100%; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <span class="lbl">Inline ingredient pills (steps)</span>
+  <span class="pill ingredient">2 cloves garlic</span>
+  <span class="pill ingredient">200g noodles</span>
+  <span class="pill timer"><i data-lucide="timer"></i>Boil 10 min</span>
+
+  <span class="lbl">Status flags &amp; counts</span>
+  <span class="pill flag"><i data-lucide="wifi-off"></i>Offline</span>
+  <span class="pill review"><i data-lucide="info"></i>Review</span>
+  <span class="pill cooked"><i data-lucide="chef-hat"></i>4×</span>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

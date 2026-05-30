@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--surface); color: var(--fg1); padding: 24px; display: flex; justify-content: center; }
+  .tabbar { background: var(--bg); width: 360px; border-radius: 22px; box-shadow: var(--shadow-md); display: flex; justify-content: space-around; padding: 12px 8px 14px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--fg3); font-size: 11px; font-weight: 600; flex: 1; }
+  .tab.active { color: var(--accent-deep); }
+  .tab i { width: 24px; height: 24px; }
+</style>
+</head>
+<body>
+  <div class="tabbar">
+    <div class="tab active"><i data-lucide="notebook-text"></i>My Recipes</div>
+    <div class="tab"><i data-lucide="shopping-basket"></i>Grocery List</div>
+    <div class="tab"><i data-lucide="user"></i>Profile</div>
+  </div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: #fff; color: #1C1A17; padding: 26px 32px; }
+  .theme { display: grid; grid-template-columns: 96px repeat(3, 1fr); gap: 0 12px; align-items: center; margin-bottom: 14px; }
+  .theme:last-child { margin-bottom: 0; }
+  .label { font-size: 14px; font-weight: 700; }
+  .label small { display: block; font-size: 11px; font-weight: 600; color: #A8A199; }
+  .cell { height: 46px; border-radius: 10px; display: flex; align-items: flex-end; padding: 6px 8px; }
+  .cell span { font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+  .head { font-size: 11px; font-weight: 700; color: #A8A199; letter-spacing: 0.04em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+  <div class="theme">
+    <div></div>
+    <div class="head">accent</div><div class="head">accent-deep</div><div class="head">accent-soft</div>
+  </div>
+  <div class="theme">
+    <div class="label">Saffron<small>default</small></div>
+    <div class="cell" style="background:#E0A032"><span style="color:#fff">#E0A032</span></div>
+    <div class="cell" style="background:#8A5A12"><span style="color:#fff">#8A5A12</span></div>
+    <div class="cell" style="background:#FBF2DF"><span style="color:#8A5A12">#FBF2DF</span></div>
+  </div>
+  <div class="theme">
+    <div class="label">Sage<small>muted green</small></div>
+    <div class="cell" style="background:#88A878"><span style="color:#fff">#88A878</span></div>
+    <div class="cell" style="background:#44603A"><span style="color:#fff">#44603A</span></div>
+    <div class="cell" style="background:#EEF3EA"><span style="color:#44603A">#EEF3EA</span></div>
+  </div>
+  <div class="theme">
+    <div class="label">Terracotta<small>blush/rust</small></div>
+    <div class="cell" style="background:#CE8467"><span style="color:#fff">#CE8467</span></div>
+    <div class="cell" style="background:#8C4A30"><span style="color:#fff">#8C4A30</span></div>
+    <div class="cell" style="background:#F8ECE6"><span style="color:#8C4A30">#F8ECE6</span></div>
+  </div>
+  <div class="theme">
+    <div class="label">Ocean<small>pale/navy</small></div>
+    <div class="cell" style="background:#6F9FC2"><span style="color:#fff">#6F9FC2</span></div>
+    <div class="cell" style="background:#2E5070"><span style="color:#fff">#2E5070</span></div>
+    <div class="cell" style="background:#EAF1F6"><span style="color:#2E5070">#EAF1F6</span></div>
+  </div>
+</body>
+</html>

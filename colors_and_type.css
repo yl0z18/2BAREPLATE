@@ -1,0 +1,227 @@
+/* ============================================================
+   BarePlate — Colors & Type
+   Scandinavian-minimalist, warm food culture.
+   Background is ALWAYS pure white (light) or near-black (dark).
+   Theme color only ever touches: accents, buttons, icons, borders.
+   ============================================================ */
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('fonts/PlusJakartaSans-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* ---------- Font ---------- */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* ---------- Neutrals — LIGHT (default) ----------
+     Warm-tinted neutrals. The background is pure white;
+     surfaces are barely-warm grays for cards & sheets. */
+  --bg:        #FFFFFF;   /* pure white — page background, never tinted */
+  --surface:   #F7F5F2;   /* warm gray — cards, sheets, inputs */
+  --surface-2: #EFEDE8;   /* slightly deeper warm gray — pressed/hover */
+  --fg1:       #1C1A17;   /* near-black warm — primary text */
+  --fg2:       #6B655C;   /* warm gray — secondary text, amounts */
+  --fg3:       #A8A199;   /* light warm gray — tertiary, placeholders */
+  --border:    #ECE9E4;   /* hairline — used sparingly, never between list items */
+  --border-2:  #DEDAD3;   /* slightly stronger hairline for inputs */
+
+  /* ---------- Fixed semantic ---------- */
+  --danger:       #C0492F;  /* delete / destructive — ALWAYS fixed, never themed */
+  --danger-bg:    #FBEDE9;
+  --on-accent:    #FFFFFF;  /* text/icon sitting on a filled accent button */
+
+  /* ---------- Theme-derived semantic ----------
+     These FOLLOW the active theme (set after theme blocks below). */
+
+  /* ---------- Radii — soft, minimal ---------- */
+  --r-xs:  6px;
+  --r-sm:  10px;
+  --r-md:  14px;   /* default card radius */
+  --r-lg:  20px;   /* photo headers, bottom sheets */
+  --r-xl:  28px;
+  --r-pill: 999px;
+
+  /* ---------- Spacing scale (4pt base) ---------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;   /* default gutter */
+  --s-5: 20px;
+  --s-6: 24px;   /* screen edge padding */
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 56px;
+  --s-10: 72px;  /* generous negative space between sections */
+
+  /* ---------- Elevation — soft, warm, low-contrast ----------
+     Minimalist: shadows are whisper-soft, never harsh. */
+  --shadow-sm:  0 1px 2px rgba(28,26,23,0.04);
+  --shadow-md:  0 2px 12px rgba(28,26,23,0.06);
+  --shadow-lg:  0 8px 32px rgba(28,26,23,0.10);   /* bottom sheets, modals */
+  --shadow-pill: 0 4px 16px rgba(28,26,23,0.12);  /* the floating Add a Recipe pill */
+
+  /* ---------- Type scale ---------- */
+  --t-display:   34px;   /* big screen titles, "Enjoy your meal" */
+  --t-h1:        28px;   /* screen titles: My Recipes, Grocery List */
+  --t-h2:        22px;   /* recipe title, card emphasis */
+  --t-h3:        18px;   /* card titles, sheet headers */
+  --t-body:      16px;   /* default body */
+  --t-sm:        14px;   /* secondary, meta */
+  --t-xs:        12px;   /* labels, badges */
+  --t-cook:      26px;   /* cook-mode step text — large & readable */
+
+  --lh-tight: 1.15;
+  --lh-snug:  1.3;
+  --lh-body:  1.55;
+
+  --ls-label: 0.08em;    /* uppercase section labels */
+  --ls-tight: -0.01em;   /* large headings tighten slightly */
+
+  /* ---------- DEFAULT THEME: Saffron ---------- */
+  --accent:      #E0A032;  /* warm golden — buttons, active icons */
+  --accent-deep: #8A5A12;  /* deep amber — accent text on white */
+  --accent-soft: #FBF2DF;  /* faint wash — chips, selected rows */
+  --accent-line: #EBD9B0;  /* accent-tinted border */
+
+  /* Theme-derived semantics — recolor automatically with the active theme */
+  --timer:        var(--accent);       /* cook-mode timer fills/icons */
+  --timer-bg:     var(--accent-soft);  /* timer pill wash */
+  --success:      var(--accent-deep);  /* checkmarks, "done" */
+}
+
+/* ============================================================
+   THEMES — apply via [data-theme="…"] on <html> or any container.
+   Only accent tokens change. Neutrals/background stay constant.
+   ============================================================ */
+
+[data-theme="saffron"] {
+  --accent:      #E0A032;
+  --accent-deep: #8A5A12;
+  --accent-soft: #FBF2DF;
+  --accent-line: #EBD9B0;
+}
+[data-theme="sage"] {
+  --accent:      #88A878;
+  --accent-deep: #44603A;
+  --accent-soft: #EEF3EA;
+  --accent-line: #D2DEC9;
+}
+[data-theme="terracotta"] {
+  --accent:      #CE8467;
+  --accent-deep: #8C4A30;
+  --accent-soft: #F8ECE6;
+  --accent-line: #ECD2C6;
+}
+[data-theme="ocean"] {
+  --accent:      #6F9FC2;
+  --accent-deep: #2E5070;
+  --accent-soft: #EAF1F6;
+  --accent-line: #CBDCE8;
+}
+[data-theme="mono"] {
+  --accent:      #1C1A17;
+  --accent-deep: #1C1A17;
+  --accent-soft: #EFEDE9;
+  --accent-line: #D9D5CE;
+}
+
+/* ============================================================
+   DARK MODE — independent of theme. Background near-black warm.
+   Pair with any theme; accent stays, neutrals invert.
+   ============================================================ */
+
+[data-mode="dark"] {
+  --bg:        #131210;
+  --surface:   #1E1C19;
+  --surface-2: #29261F;
+  --fg1:       #F5F2EC;
+  --fg2:       #A8A199;
+  --fg3:       #6B655C;
+  --border:    #2A2825;
+  --border-2:  #3A372F;
+
+  --danger-bg: #2E1A15;
+  --on-accent: #131210;
+}
+/* In dark mode, soft washes deepen so they read on near-black */
+[data-mode="dark"][data-theme="saffron"]   { --accent-soft:#2E2615; --accent-line:#4A3D1F; }
+[data-mode="dark"][data-theme="sage"]      { --accent-soft:#1E2519; --accent-line:#36452C; }
+[data-mode="dark"][data-theme="terracotta"]{ --accent-soft:#2C1F18; --accent-line:#4A3024; }
+[data-mode="dark"][data-theme="ocean"]     { --accent-soft:#192530; --accent-line:#2C4255; }
+[data-mode="dark"][data-theme="mono"]      { --accent:#F5F2EC; --accent-deep:#F5F2EC; --accent-soft:#26231F; --accent-line:#3A372F; }
+
+/* ============================================================
+   SEMANTIC TYPE CLASSES
+   ============================================================ */
+
+.bp-display {
+  font-family: var(--font-sans);
+  font-size: var(--t-display);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--fg1);
+}
+.bp-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--t-h1);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--fg1);
+}
+.bp-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  color: var(--fg1);
+}
+.bp-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  color: var(--fg1);
+}
+.bp-body {
+  font-family: var(--font-sans);
+  font-size: var(--t-body);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  color: var(--fg1);
+}
+.bp-sm {
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  color: var(--fg2);
+}
+.bp-label {
+  font-family: var(--font-sans);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--accent-deep);   /* section labels render in accent */
+}
+.bp-cook {
+  font-family: var(--font-sans);
+  font-size: var(--t-cook);
+  font-weight: 500;
+  line-height: var(--lh-body);
+  color: var(--fg1);
+}

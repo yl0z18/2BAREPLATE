@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 26px 32px; display: flex; align-items: center; gap: 40px; flex-wrap: wrap; }
+  .group { }
+  .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg3); margin-bottom: 12px; }
+  .dots { display: flex; gap: 14px; }
+  .dot { width: 34px; height: 34px; border-radius: 999px; cursor: pointer; }
+  .dot.sel { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg1); }
+  .switch { width: 52px; height: 31px; border-radius: 999px; background: var(--accent); position: relative; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 24px; width: 25px; height: 25px; border-radius: 999px; background: #fff; box-shadow: var(--shadow-sm); }
+  .switch.off { background: var(--surface-2); }
+  .switch.off::after { left: 3px; }
+  .switches { display: flex; gap: 18px; align-items: center; }
+</style>
+</head>
+<body>
+  <div class="group">
+    <div class="lbl">Theme dots</div>
+    <div class="dots">
+      <div class="dot sel" style="background:#E0A032"></div>
+      <div class="dot" style="background:#BFA06A"></div>
+      <div class="dot" style="background:#88A878"></div>
+      <div class="dot" style="background:#CE8467"></div>
+      <div class="dot" style="background:#6F9FC2"></div>
+    </div>
+  </div>
+  <div class="group">
+    <div class="lbl">Toggles</div>
+    <div class="switches">
+      <div class="switch"></div>
+      <div class="switch off"></div>
+    </div>
+  </div>
+</body>
+</html>

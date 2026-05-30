@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 18px 24px; }
+  .list { display: flex; flex-direction: column; }
+  .card { display: flex; align-items: center; gap: 14px; padding: 16px 8px; }
+  .card .body { flex: 1; min-width: 0; }
+  .title { font-size: 18px; font-weight: 600; color: var(--fg1); }
+  .meta { font-size: 13px; font-weight: 500; color: var(--fg2); margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+  .cooked { display: flex; align-items: center; gap: 5px; color: var(--accent-deep); font-weight: 700; font-size: 15px; }
+  .cooked i { width: 17px; height: 17px; }
+  .dash { color: var(--fg3); font-weight: 700; font-size: 16px; }
+  .note { font-size: 11px; color: var(--fg3); font-weight: 600; padding: 0 8px; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="list">
+    <div class="card">
+      <div class="body">
+        <div class="title">Garlic Butter Noodles</div>
+        <div class="meta">25 min</div>
+      </div>
+      <div class="cooked"><i data-lucide="chef-hat"></i>4×</div>
+    </div>
+    <div class="card">
+      <div class="body">
+        <div class="title">Lola's Chicken Adobo</div>
+        <div class="meta">50 min</div>
+      </div>
+      <div class="cooked"><i data-lucide="chef-hat"></i>12×</div>
+    </div>
+    <div class="card">
+      <div class="body">
+        <div class="title">Miso Glazed Salmon</div>
+        <div class="meta">20 min</div>
+      </div>
+      <div class="dash">—</div>
+    </div>
+  </div>
+  <div class="note">No dividers — items separated by whitespace. Uncooked shows a dash.</div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 28px 32px; }
+  .scale { display: flex; flex-direction: column; gap: 9px; }
+  .row { display: flex; align-items: center; gap: 14px; }
+  .bar { height: 16px; background: var(--accent); border-radius: 4px; }
+  .lbl { font-size: 12px; font-weight: 600; width: 64px; }
+  .val { font-size: 11px; color: var(--fg3); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="scale">
+    <div class="row"><span class="lbl">s-1</span><div class="bar" style="width:4px"></div><span class="val">4px</span></div>
+    <div class="row"><span class="lbl">s-2</span><div class="bar" style="width:8px"></div><span class="val">8px</span></div>
+    <div class="row"><span class="lbl">s-3</span><div class="bar" style="width:12px"></div><span class="val">12px</span></div>
+    <div class="row"><span class="lbl">s-4 · gutter</span><div class="bar" style="width:16px"></div><span class="val">16px</span></div>
+    <div class="row"><span class="lbl">s-6 · edge</span><div class="bar" style="width:24px"></div><span class="val">24px</span></div>
+    <div class="row"><span class="lbl">s-7</span><div class="bar" style="width:32px"></div><span class="val">32px</span></div>
+    <div class="row"><span class="lbl">s-9</span><div class="bar" style="width:56px"></div><span class="val">56px</span></div>
+    <div class="row"><span class="lbl">s-10</span><div class="bar" style="width:72px"></div><span class="val">72px · section air</span></div>
+  </div>
+</body>
+</html>

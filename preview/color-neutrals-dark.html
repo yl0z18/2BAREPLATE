@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="dark" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 28px 32px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .chip { height: 64px; border-radius: var(--r-sm); border: 1px solid var(--border); }
+  .name { font-size: 13px; font-weight: 600; margin-top: 8px; }
+  .hex { font-size: 11px; color: var(--fg3); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div><div class="chip" style="background:#131210"></div><div class="name">bg</div><div class="hex">#131210</div></div>
+    <div><div class="chip" style="background:#1E1C19"></div><div class="name">surface</div><div class="hex">#1E1C19</div></div>
+    <div><div class="chip" style="background:#29261F"></div><div class="name">surface-2</div><div class="hex">#29261F</div></div>
+    <div><div class="chip" style="background:#2A2825"></div><div class="name">border</div><div class="hex">#2A2825</div></div>
+    <div><div class="chip" style="background:#F5F2EC"></div><div class="name">fg1</div><div class="hex">#F5F2EC</div></div>
+    <div><div class="chip" style="background:#A8A199"></div><div class="name">fg2</div><div class="hex">#A8A199</div></div>
+    <div><div class="chip" style="background:#6B655C"></div><div class="name">fg3</div><div class="hex">#6B655C</div></div>
+    <div><div class="chip" style="background:#3A372F"></div><div class="name">border-2</div><div class="hex">#3A372F</div></div>
+  </div>
+</body>
+</html>

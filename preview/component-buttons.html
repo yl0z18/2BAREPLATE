@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="saffron">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; font-family: var(--font-sans); background: var(--bg); color: var(--fg1); padding: 28px 32px; display: flex; flex-wrap: wrap; gap: 14px 16px; align-items: center; }
+  button { font-family: var(--font-sans); font-size: 16px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .pill { background: var(--accent); color: var(--on-accent); border-radius: var(--r-pill); padding: 15px 28px; box-shadow: var(--shadow-pill); }
+  .secondary { background: var(--surface); color: var(--fg1); border-radius: var(--r-pill); padding: 13px 24px; }
+  .ghost { background: transparent; color: var(--fg2); border: 1px solid var(--border-2); border-radius: var(--r-pill); padding: 12px 22px; }
+  .link { background: transparent; color: var(--accent-deep); font-size: 14px; font-weight: 700; padding: 0; }
+  .danger { background: var(--danger-bg); color: var(--danger); border-radius: var(--r-pill); padding: 13px 24px; }
+  i { width: 18px; height: 18px; }
+</style>
+</head>
+<body>
+  <button class="pill"><i data-lucide="plus"></i>Add a Recipe</button>
+  <button class="pill">Start Cooking</button>
+  <button class="secondary">Back to Recipe</button>
+  <button class="ghost">Not now</button>
+  <button class="danger"><i data-lucide="trash-2"></i>Delete All Data</button>
+  <button class="link">View Original</button>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
