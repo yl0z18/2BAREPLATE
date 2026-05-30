@@ -43,6 +43,7 @@ function App() {
   const [tab, setTab] = useState('recipes');
   const [view, setView] = useState('list'); // list | detail | cook | done | edit
   const [cookAtEnd, setCookAtEnd] = useState(false); // resume cook mode on its last step
+  const [cookMilestone, setCookMilestone] = useState(1); // cook count captured when cooking starts
   const [selected, setSelected] = useState(null);
   const [overlay, setOverlay] = useState(null); // add | signin | collections | sortfilter | share | voice | grocerytarget | units | language | ...
   const [modal, setModal] = useState(null); // {type:'loading'|'fail', url}
@@ -234,93 +235,78 @@ function App() {
     setView('edit');
   };
 
+  const withActiveList = (fn) =>
+    setGroceryLists((ls) =>
+      ls.map((l) => (l.id === groceryListId ? { ...l, groups: fn(l.groups) } : l))
+    );
+
   const toggleGroc = (gi, ii) =>
-    setGrocery((g) =>
+    withActiveList((g) =>
       g.map((grp, x) =>
         x !== gi
           ? grp
-          : {
-              ...grp,
-              items: grp.items.map((it, y) =>
-                y !== ii ? it : { ...it, checked: !it.checked }
-              ),
-            }
+          : { ...grp, items: grp.items.map((it, y) => y !== ii ? it : { ...it, checked: !it.checked }) }
       )
     );
   const addGroceryItem = (name, amt) =>
-    setGrocery((g) => {
-      const base = g.length
-        ? g.map((x) => ({ ...x, items: [...x.items] }))
-        : [];
+    withActiveList((g) => {
+      const base = g.length ? g.map((x) => ({ ...x, items: [...x.items] })) : [];
       let a = base.find((x) => x.aisle === 'Added by you');
-      if (!a) {
-        a = { aisle: 'Added by you', items: [] };
-        base.push(a);
-      }
-      a.items.push({
-        name,
-        amt: amt || '',
-        src: 'Added manually',
-        checked: false,
-      });
+      if (!a) { a = { aisle: 'Added by you', items: [] }; base.push(a); }
+      a.items.push({ name, amt: amt || '', src: 'Added manually', checked: false });
       return base;
     });
+  const editGroceryItem = (gi, ii, name, amt) =>
+    withActiveList((g) =>
+      g.map((grp, x) =>
+        x !== gi
+          ? grp
+          : { ...grp, items: grp.items.map((it, y) => y !== ii ? it : { ...it, name, amt }) }
+      )
+    );
   const clearChecked = () =>
-    setGrocery((g) =>
-      g
-        .map((a) => ({ ...a, items: a.items.filter((i) => !i.checked) }))
-        .filter((a) => a.items.length)
+    withActiveList((g) =>
+      g.map((a) => ({ ...a, items: a.items.filter((i) => !i.checked) })).filter((a) => a.items.length)
     );
   const setAllGroc = (val) =>
-    setGrocery((g) =>
-      g.map((a) => ({
-        ...a,
-        items: a.items.map((i) => ({ ...i, checked: val })),
-      }))
-    );
+    withActiveList((g) => g.map((a) => ({ ...a, items: a.items.map((i) => ({ ...i, checked: val })) })));
   const deleteGroceryItem = (gi, ii) =>
-    setGrocery((g) =>
-      g
-        .map((grp, x) =>
-          x !== gi
-            ? grp
-            : { ...grp, items: grp.items.filter((_, y) => y !== ii) }
-        )
+    withActiveList((g) =>
+      g.map((grp, x) => x !== gi ? grp : { ...grp, items: grp.items.filter((_, y) => y !== ii) })
         .filter((grp) => grp.items.length)
     );
   const deleteGroceryList = () =>
     askConfirm({
       title: 'Delete grocery list?',
-      message: 'This clears every item from your list. This can’t be undone.',
-      confirmLabel: 'Delete',
+message: "This clears every item from your list. This can't be undone.",
+confirmLabel: 'Delete',
       danger: true,
-      action: () => {
-        setGrocery([]);
-        flashToast('List cleared');
-      },
+      action: () => { withActiveList(() => []); flashToast('List cleared'); },
     });
+  const createGroceryList = () => {
+    const id = 'g' + Date.now();
+    setGroceryLists((ls) => [...ls, { id, name: 'New List', groups: [] }]);
+    setGroceryListId(id);
+  };
 
   const recipeToItems = (r) =>
     ((r && r.sections) || []).flatMap((s) =>
-      s.items.map((it) => ({
-        name: it.name,
-        amt: it.amt,
-        src: r.title,
-        checked: false,
-      }))
+      s.items.map((it) => ({ name: it.name, amt: it.amt, src: r.title, checked: false }))
     );
   const addRecipeToGrocery = (fresh) => {
     const items = recipeToItems(selected);
-    setGrocery((g) => {
-      const base = fresh ? [] : g.map((x) => ({ ...x, items: [...x.items] }));
-      let a = base.find((x) => x.aisle === 'From recipes');
-      if (!a) {
-        a = { aisle: 'From recipes', items: [] };
-        base.push(a);
-      }
-      a.items.push(...items);
-      return base;
-    });
+    const targetId = groceryListId || (groceryLists[0] && groceryLists[0].id);
+    setGroceryLists((ls) =>
+      ls.map((l) => {
+        if (l.id !== targetId) return l;
+        const base = fresh ? [] : l.groups.map((x) => ({ ...x, items: [...x.items] }));
+        let a = base.find((x) => x.aisle === 'From recipes');
+        if (!a) { a = { aisle: 'From recipes', items: [] }; base.push(a); }
+        a.items.push(...items);
+        return { ...l, groups: base };
+      })
+    );
+    setGroceryListId(targetId);
     setOverlay(null);
     setView('detail');
     setTab('grocery');
@@ -331,12 +317,13 @@ function App() {
     askConfirm({
       title: 'Delete all data?',
       message:
-        'Permanently removes every recipe, collection, and grocery list from this device. This can’t be undone.',
+        "Permanently removes every recipe, collection, and grocery list from this device. This can’t be undone.",
       confirmLabel: 'Delete All',
       danger: true,
       action: () => {
         setRecipes([]);
-        setGrocery([]);
+        setGroceryLists([{ id: 'g0', name: 'My List', groups: [] }]);
+        setGroceryListId(null);
         setCollections([]);
         setTab('recipes');
         setView('list');
@@ -364,7 +351,7 @@ function App() {
 
   const readScale = { s: 0.9, m: 1, l: 1.15 }[textSize] || 1;
   const faded = view === 'cook' || view === 'done' || view === 'edit';
-  const groceryCount = grocery.reduce((n, g) => n + g.items.length, 0);
+  const groceryCount = groceryLists.reduce((n, l) => n + l.groups.reduce((m, g) => m + g.items.length, 0), 0);
 
   let content;
   if (tab === 'recipes') {
@@ -468,17 +455,31 @@ function App() {
         />
       );
   } else if (tab === 'grocery') {
-    content = (
-      <GroceryList
-        data={grocery}
-        onToggle={toggleGroc}
-        onAddItem={addGroceryItem}
-        onClearChecked={clearChecked}
-        onToggleAll={setAllGroc}
-        onDeleteList={deleteGroceryList}
-        onDeleteItem={deleteGroceryItem}
-      />
-    );
+    if (groceryListId) {
+      const activeList = groceryLists.find((l) => l.id === groceryListId);
+      content = activeList ? (
+        <GroceryList
+          name={activeList.name}
+          data={activeList.groups}
+          onBack={() => setGroceryListId(null)}
+          onToggle={toggleGroc}
+          onAddItem={addGroceryItem}
+          onEditItem={editGroceryItem}
+          onClearChecked={clearChecked}
+          onToggleAll={setAllGroc}
+          onDeleteList={deleteGroceryList}
+          onDeleteItem={deleteGroceryItem}
+        />
+      ) : null;
+    } else {
+      content = (
+        <GroceryHome
+          lists={groceryLists}
+          onOpen={(l) => setGroceryListId(l.id)}
+          onNew={createGroceryList}
+        />
+      );
+    }
   } else {
     content = (
       <Profile
@@ -509,6 +510,7 @@ function App() {
           active={tab}
           onChange={(t) => {
             if (t === 'recipes') setRecipesNonce((n) => n + 1);
+            if (t === 'grocery') setGroceryListId(null);
             setTab(t);
             setView('list');
           }}

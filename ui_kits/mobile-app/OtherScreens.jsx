@@ -16,7 +16,6 @@ const GROC_UNITS = [
   { id: 'other', label: 'Other…' },
 ];
 
-
 function GroceryRow({ item, onToggle, onDelete, onEdit }) {
   const REVEAL = 84;
   const [dx, setDx] = useState(0);
@@ -46,7 +45,6 @@ function GroceryRow({ item, onToggle, onDelete, onEdit }) {
     if (base.current < 0) { base.current = 0; setDx(0); return; }
     onToggle();
   };
-
   const startEdit = (e) => {
     e.stopPropagation();
     setEditName(item.name);
@@ -179,7 +177,7 @@ function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEdit
           <IconButton name="trash-2" onClick={onDeleteList} color={empty ? 'var(--fg3)' : undefined} />
         </div>} />
       <div className="bp-screen-pad">
-      <h1 className="bp-h1 bp-screen-title">{listName || 'Grocery List'}</h1>
+        <h1 className="bp-h1 bp-screen-title">{listName || 'Grocery List'}</h1>
         <div className="bp-subrow">
           <span className="bp-subrow-count">{empty ? 'No items yet' : `${checked}/${all.length} items checked`}</span>
           {!empty && <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button>}
@@ -303,7 +301,6 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, langua
             <span className="bp-set-label">Auto-Save</span>
             <Toggle key={'as-' + autosave} on={autosave} onChange={setAutosave} />
           </div>
-          <Row icon="globe" label="Language" value={langLabel || 'English'} onClick={onLanguage} last />
           <Row icon="globe" label="Language" value={langLabel || 'English'} onClick={onLanguage} last />
         </div>
 
