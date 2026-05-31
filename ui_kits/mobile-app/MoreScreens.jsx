@@ -7,7 +7,7 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
 // ---------- Sort & Filter (My Recipes) ----------
 const SORTS = [
   { id: 'recent', label: 'Recently added' },
-  { id: 'alpha', label: 'Alphabetical (A–Z)' },
+  { id: 'alpha', label: 'Alphabetical (A-Z)' },
   { id: 'cooked', label: 'Most cooked' },
 ];
 const FILTERS = [
@@ -65,7 +65,7 @@ function ShareSheet({ open, onClose, recipe, onAction }) {
           </div>
           <div className="bp-share-note">
             <Icon name="shield" size={15} strokeWidth={2} color="var(--accent-deep)" />
-            Shares a clean link to the original source — no ads, no clutter.
+            Shares a clean link to the original source - no ads, no clutter.
           </div>
           <div className="bp-share-targets">
             {targets.map(t => (
@@ -84,6 +84,7 @@ function ShareSheet({ open, onClose, recipe, onAction }) {
 // ---------- Edit Recipe (full screen) ----------
 function EditRecipe({ recipe, isNew, onCancel, onSave }) {
   const [title, setTitle] = useState(recipe.title);
+  const [titleErr, setTitleErr] = useState(false);
   const [source, setSource] = useState(recipe.source || '');
   const [hrs, setHrs] = useState(() => {
     const m = (recipe.time || '').match(/(\d+)\s*h/); return m ? m[1] : '';
@@ -97,10 +98,9 @@ function EditRecipe({ recipe, isNew, onCancel, onSave }) {
   const [sections, setSections] = useState(() => clone(recipe.sections && recipe.sections.length ? recipe.sections : [{ label: 'Main', items: [{ name: '', amt: '', unit: 'none' }] }]));
   const [steps, setSteps] = useState(() => clone(recipe.steps && recipe.steps.length ? recipe.steps : [{ text: '', pills: [], timer: null }]));
   const photoRef = useRef(null);
-  const scanRef = useRef(null);
   const onPhotoFile = (e) => { const f = e.target.files && e.target.files[0]; if (f) setPhoto(URL.createObjectURL(f)); e.target.value = ''; };
 
-  const buildTime = () => { const h = parseInt(hrs)||0; const m = parseInt(mins)||0; if (!h && !m) return ''; return [h && h+'h', m && m+'min'].filter(Boolean).join(' '); };
+  const buildTime = () => { const h = parseInt(hrs)||0; const m = parseInt(mins)||0; if (!h && !m) return ''; return [h && h + ' hr', m && m + ' min'].filter(Boolean).join(' '); };
 
   const setItem = (si, ii, key, val) => setSections(s => s.map((sec, i) => i !== si ? sec
     : { ...sec, items: sec.items.map((it, j) => j !== ii ? it : { ...it, [key]: val }) }));
@@ -114,14 +114,24 @@ function EditRecipe({ recipe, isNew, onCancel, onSave }) {
   const removeStep = (i) => setSteps(st => st.filter((_, j) => j !== i));
   const addStep = () => setSteps(st => [...st, { text: '', pills: [], timer: null }]);
 
-  const save = () => onSave({ ...recipe, title, source, time: buildTime(), serves, sections, steps, photo, rating });
+  const save = () => {
+    if (!title.trim()) { setTitleErr(true); return; }
+    const saved = sections.map(sec => ({
+      ...sec,
+      items: sec.items.map(it => {
+        const u = (it.unit && it.unit !== 'none') ? it.unit : '';
+        return { ...it, amt: [it.amt, u].filter(Boolean).join(' ') };
+      })
+    }));
+    onSave({ ...recipe, title: title.trim(), source, time: buildTime(), serves, sections: saved, steps, photo, rating });
+  };
 
   return (
     <div className="bp-screen-inner" data-screen-label={isNew ? 'New Recipe' : 'Edit Recipe'}>
       <NavBar
         left={<button className="bp-link" onClick={onCancel}>Cancel</button>}
         title={isNew ? 'New Recipe' : 'Edit Recipe'}
-        right={<button className="bp-link" onClick={save}>Save</button>} />
+        right={<button className="bp-link" onClick={save} style={{ opacity: title.trim() ? 1 : 0.4 }}>Save</button>} />
       <div className="bp-screen-pad bp-edit">
         <div className="bp-edit-photo">
           {photo
@@ -134,8 +144,13 @@ function EditRecipe({ recipe, isNew, onCancel, onSave }) {
         </div>
 
         <div className="bp-field">
-          <label className="bp-field-label">Title</label>
-          <input className="bp-field-input" value={title} placeholder="Required" onChange={e => setTitle(e.target.value)} />
+          <label className="bp-field-label">Title {titleErr && <span style={{color:'var(--danger)',fontWeight:700,marginLeft:6}}>Required</span>}</label>
+          <input
+            className={'bp-field-input' + (titleErr ? ' bp-field-error' : '')}
+            value={title}
+            placeholder="Required"
+            onChange={e => { setTitle(e.target.value); if (e.target.value.trim()) setTitleErr(false); }}
+          />
         </div>
 
         <div className="bp-field-row">
@@ -233,9 +248,9 @@ function EditRecipe({ recipe, isNew, onCancel, onSave }) {
 
 // ---------- AI Voice Assistant (Cook Mode) ----------
 const VOICE_QA = [
-  { q: 'How much garlic?', a: '4 cloves, minced — it goes in with the butter in step 3.' },
-  { q: 'What’s the next step?', a: 'Drain the pasta, saving a splash of the water, then toss it into the garlic butter.' },
-  { q: 'Set a 5 minute timer', a: 'Done — a 5 minute timer is running. I’ll let you know when it’s up.' },
+  { q: 'How much garlic?', a: '4 cloves, minced - it goes in with the butter in step 3.' },
+  { q: 'What is the next step?', a: 'Drain the pasta, saving a splash of the water, then toss it into the garlic butter.' },
+  { q: 'Set a 5 minute timer', a: 'Done - a 5 minute timer is running. I\'ll let you know when it\'s up.' },
   { q: 'Can I swap the parmesan?', a: 'Pecorino works nicely here, or nutritional yeast to keep it dairy-free.' },
 ];
 
@@ -248,7 +263,7 @@ function VoiceAssistantSheet({ open, onClose }) {
         <div className={'bp-voice-orb' + (active ? ' answering' : '')}>
           <Icon name="mic" size={30} strokeWidth={2.1} color="var(--on-accent)" />
         </div>
-        <div className="bp-voice-status">{active ? `“${active.q}”` : 'Listening — ask me anything about this recipe'}</div>
+        <div className="bp-voice-status">{active ? '"' + active.q + '"' : 'Listening - ask me anything about this recipe'}</div>
         {active && <div className="bp-voice-answer">{active.a}</div>}
         <div className="bp-label-row sheet">Try asking</div>
         <div className="bp-voice-chips">
@@ -258,7 +273,7 @@ function VoiceAssistantSheet({ open, onClose }) {
         </div>
         <div className="bp-voice-note">
           <Icon name="info" size={14} strokeWidth={2} color="var(--fg2)" />
-          Answers come only from this recipe — hands-free, no tapping needed.
+          Answers come only from this recipe - hands-free, no tapping needed.
         </div>
         <button className="bp-done-back" onClick={onClose}>Done</button>
       </div>
@@ -266,7 +281,7 @@ function VoiceAssistantSheet({ open, onClose }) {
   );
 }
 
-// ---------- Grocery target (Done Cooking → grocery) ----------
+// ---------- Grocery target (Done Cooking -> grocery) ----------
 function GroceryTargetSheet({ open, onClose, recipe, lists = [], onAddExisting, onStartNew }) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -279,7 +294,7 @@ function GroceryTargetSheet({ open, onClose, recipe, lists = [], onAddExisting, 
       {!showPicker ? (
         <React.Fragment>
           <div className="bp-target-sub">
-            You have {lists.length} {lists.length === 1 ? 'list' : 'lists'}. Add the ingredients from {recipe ? recipe.title : 'this recipe'} to an existing list, or start fresh.
+            {'You have ' + lists.length + ' ' + (lists.length === 1 ? 'list' : 'lists') + '. Add the ingredients from ' + (recipe ? recipe.title : 'this recipe') + ' to an existing list, or start fresh.'}
           </div>
           {lists.length > 0 && (
             <button className="bp-cta bp-sheet-cta tight" onClick={() => setShowPicker(true)}>

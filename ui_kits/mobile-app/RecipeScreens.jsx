@@ -115,10 +115,11 @@ function RecipeDetail({ recipe, units, onBack, onEdit, onShare, onCook, onAdjust
   const [tab, setTab] = useState('ingredients');
   const [serves, setServes] = useState(recipe.serves);
   const [metric, setMetric] = useState(units !== 'us');
+  const [reviewTip, setReviewTip] = useState(false);
   const scrollRef = useRef(null);
   const [showTop, setShowTop] = useState(false);
   const factor = serves / recipe.serves;
-  useEffect(() => { setServes(recipe.serves); setTab('ingredients'); }, [recipe.id]);
+  useEffect(() => { setServes(recipe.serves); setTab('ingredients'); setReviewTip(false); }, [recipe.id]);
   useEffect(() => { setMetric(units !== 'us'); }, [units]);
 
   const toTop = () => { if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' }); };
@@ -136,7 +137,7 @@ function RecipeDetail({ recipe, units, onBack, onEdit, onShare, onCook, onAdjust
             : null}
           {!recipe.photo && <div className="bp-photo-placeholder"><BowlMark size={64} color="var(--accent)" /></div>}
           <div className="bp-photo-nav">
-            <button className="bp-round-btn" onClick={onBack}><Icon name="arrow-left" size={20} strokeWidth={2.2} /></button>
+          <button className="bp-round-btn" onClick={onBack}><Icon name="chevron-left" size={22} strokeWidth={2.4} /></button>
             <div className="bp-nav-actions">
               <button className="bp-round-btn" onClick={onEdit}><Icon name="pencil" size={18} strokeWidth={2.2} /></button>
               <button className="bp-round-btn" onClick={onShare}><Icon name="share" size={18} strokeWidth={2.2} /></button>
@@ -152,16 +153,30 @@ function RecipeDetail({ recipe, units, onBack, onEdit, onShare, onCook, onAdjust
             <span className="bp-meta-text">
               {[recipe.source,
                 recipe.flags.includes('offline') && 'Offline',
-                recipe.flags.includes('review') && 'Needs review'
               ].filter(Boolean).map((t, i, arr) => (
                 <React.Fragment key={i}>
-                  <span className={t === 'Needs review' ? 'review' : undefined}>{t}</span>
+                  <span>{t}</span>
                   {i < arr.length - 1 && <span className="bp-meta-dot">•</span>}
                 </React.Fragment>
               ))}
+              {recipe.flags.includes('review') && (
+                <React.Fragment>
+                  {(recipe.source || recipe.flags.includes('offline')) && <span className="bp-meta-dot">•</span>}
+                  <span className="review">Needs review</span>
+                  <button className="bp-review-info-btn" onClick={e => { e.stopPropagation(); setReviewTip(v => !v); }} aria-label="What does needs review mean?">
+                    <Icon name="info" size={13} strokeWidth={2} color="var(--accent)" />
+                  </button>
+                </React.Fragment>
+              )}
             </span>
             <Stars value={recipe.rating} />
           </div>
+          {reviewTip && (
+            <div className="bp-review-tip">
+              This recipe was extracted from a video. Double-check the ingredients and steps match what you saw before cooking.
+              <button className="bp-review-tip-close" onClick={() => setReviewTip(false)}>Got it</button>
+            </div>
+          )}
 
           {/* stats — time + cook count */}
           <div className="bp-stat-row">

@@ -39,10 +39,26 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
   const baseSecs = (step.timer ? step.timer.mins : 0) * 60;
   const totalSecs = Math.max(0, baseSecs + timerAdj);
 
+  // On step change (including initial mount): restore timer if one is saved for this step,
+  // otherwise clear everything.
   useEffect(() => {
-    setTimerAdj(0); setRunning(false); setTimerDone(false);
+    if (_timerState.endTime && _timerState.stepIndex === i && _timerState.endTime > Date.now()) {
+      // Restore a running timer (e.g. user navigated away and came back)
+      const r = Math.max(0, Math.round((_timerState.endTime - Date.now()) / 1000));
+      setTimerAdj(0);
+      setTimerDone(false);
+      setRemaining(r);
+      setRunning(true);
+      if (onTimerUpdate) onTimerUpdate({ remaining: r, label: step.timer && step.timer.label, stepIndex: i });
+      return;
+    }
+    // New step or no saved timer: reset
+    setTimerAdj(0);
+    setRunning(false);
+    setTimerDone(false);
     clearInterval(intervalRef.current);
     _timerState.endTime = null;
+    _timerState.stepIndex = null;
     setRemaining(0);
     if (onTimerUpdate) onTimerUpdate(null);
   }, [i]);
@@ -60,6 +76,7 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
         setTimerDone(true);
         beepDone();
         _timerState.endTime = null;
+        _timerState.stepIndex = null;
         if (onTimerUpdate) onTimerUpdate(null);
       }
     }, 500);
@@ -67,13 +84,24 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
   }, [running]);
 
   const startTimer = () => {
-    const secs = Math.max(0, totalSecs - remaining > 0 ? remaining : totalSecs);
-    _timerState.endTime = Date.now() + (remaining > 0 && !timerDone ? remaining : totalSecs) * 1000;
+    const secs = remaining > 0 && !timerDone ? remaining : totalSecs;
+    _timerState.endTime = Date.now() + secs * 1000;
     _timerState.recipeId = recipe.id;
     _timerState.stepIndex = i;
-    setRemaining(remaining > 0 && !timerDone ? remaining : totalSecs);
+    setRemaining(secs);
     setRunning(true);
     setTimerDone(false);
+  };
+
+  const resetTimer = () => {
+    clearInterval(intervalRef.current);
+    setRunning(false);
+    setTimerDone(false);
+    setTimerAdj(0);
+    setRemaining(0);
+    _timerState.endTime = null;
+    _timerState.stepIndex = null;
+    if (onTimerUpdate) onTimerUpdate(null);
   };
 
   const displaySecs = running || remaining > 0 ? remaining : totalSecs;
@@ -132,7 +160,7 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
                 const newR = Math.max(0, (running ? remaining : totalSecs) - 15);
                 setTimerAdj(a => a - 15);
                 if (running) { _timerState.endTime = Date.now() + newR * 1000; setRemaining(newR); }
-              }}>−15s</button>
+              }}>-15s</button>
               <div className="bp-cook-timer-time">
                 {String(displayM).padStart(2,'0')}:{String(displayS).padStart(2,'0')}
               </div>
@@ -146,8 +174,11 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
             </div>
             {timerDone && (
               <div className="bp-cook-timer-done">
-                <span>⏰ Time's up!</span>
-                <button className="bp-cook-timer-ack" onClick={() => setTimerDone(false)}>Got it</button>
+                <span>Time is up!</span>
+                <div style={{display:'flex',gap:8}}>
+                  <button className="bp-cook-timer-ack" onClick={resetTimer}>Reset</button>
+                  <button className="bp-cook-timer-ack" onClick={() => setTimerDone(false)}>Got it</button>
+                </div>
               </div>
             )}
           </div>

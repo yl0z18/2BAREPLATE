@@ -43,13 +43,14 @@ function App() {
   const [tab, setTab] = useState('recipes');
   const [view, setView] = useState('list'); // list | detail | cook | done | edit
   const [activeTimer, setActiveTimer] = useState(null); // {remaining, label, stepIndex}
-  const [cookAtEnd, setCookAtEnd] = useState(false); // resume cook mode on its last step
+  const [cookStartStep, setCookStartStep] = useState(0); // step index to open when entering cook
   const [cookMilestone, setCookMilestone] = useState(1); // cook count captured when cooking starts
+  const appTimerRef = useRef(null);
   const [selected, setSelected] = useState(null);
   const [overlay, setOverlay] = useState(null); // add | signin | collections | sortfilter | share | voice | grocerytarget | units | language | ...
   const [modal, setModal] = useState(null); // {type:'loading'|'fail', url}
   const [groceryLists, setGroceryLists] = useState(() => [
-    { id: 'g0', name: 'My List', groups: JSON.parse(JSON.stringify(GROCERY)) }
+    { id: 'g0', name: 'My List', groups: JSON.parse(JSON.stringify(GROCERY)), createdAt: Date.now() }
   ]);
   const [groceryListId, setGroceryListId] = useState(null); // null = home
   const [recipes, setRecipes] = useState(RECIPES);
@@ -74,6 +75,38 @@ function App() {
     setConfirm(null);
   };
 
+  // App-level timer interval: keeps the floating bar ticking when CookMode is not mounted
+  const onCookScreen = view === 'cook' && tab === 'recipes';
+  useEffect(() => {
+    if (onCookScreen) {
+      // CookMode handles its own interval — clear any App-level one
+      clearInterval(appTimerRef.current);
+      appTimerRef.current = null;
+      return;
+    }
+    // Off cook screen: if a timer is running, maintain it here
+    if (!_timerState.endTime || _timerState.endTime <= Date.now()) return;
+    clearInterval(appTimerRef.current);
+    appTimerRef.current = setInterval(() => {
+      if (!_timerState.endTime) {
+        clearInterval(appTimerRef.current);
+        appTimerRef.current = null;
+        setActiveTimer(null);
+        return;
+      }
+      const r = Math.max(0, Math.round((_timerState.endTime - Date.now()) / 1000));
+      setActiveTimer(prev => prev ? { ...prev, remaining: r } : null);
+      if (r === 0) {
+        clearInterval(appTimerRef.current);
+        appTimerRef.current = null;
+        _timerState.endTime = null;
+        _timerState.stepIndex = null;
+        setActiveTimer(null);
+      }
+    }, 500);
+    return () => { clearInterval(appTimerRef.current); appTimerRef.current = null; };
+  }, [onCookScreen]);
+
   const openRecipe = (r, from = 'list') => {
     setSelected(r);
     setDetailFrom(from);
@@ -94,7 +127,7 @@ function App() {
     setCollections((cs) => [...cs, { id, name, icon, photo, recipeIds: ids }]);
     setOverlay(null);
     if (pendingPick.length) {
-      flashToast(`Created “${name}”`);
+      flashToast('Created "' + name + '"');
       setPendingPick([]);
     } else {
       setColId(id);
@@ -127,7 +160,7 @@ function App() {
       title:
         ids.length === 1
           ? 'Delete collection?'
-          : `Delete ${ids.length} collections?`,
+          : 'Delete ' + ids.length + ' collections?',
       message:
         'Your recipes stay in your cookbook — only the ' +
         (ids.length === 1 ? 'collection is' : 'collections are') +
@@ -139,7 +172,7 @@ function App() {
         flashToast(
           ids.length === 1
             ? 'Collection deleted'
-            : `${ids.length} collections deleted`
+            : ids.length + ' collections deleted'
         );
       },
     });
@@ -154,7 +187,7 @@ function App() {
     const n = pendingPick.length;
     setOverlay(null);
     setPendingPick([]);
-    flashToast(`Added ${n} to ${c.name}`);
+    flashToast('Added ' + n + ' to ' + c.name);
   };
 
   const handlePaste = (url) => {
@@ -166,7 +199,6 @@ function App() {
     if (PAYWALL.some((p) => url.toLowerCase().includes(p))) {
       setModal({ type: 'fail', url });
     } else {
-      // video sources land on the Review-flagged recipe
       const isVideo = /youtube|tiktok|instagram/.test(url.toLowerCase());
       const r = isVideo
         ? recipes.find((x) => x.id === 'salmon')
@@ -212,7 +244,6 @@ function App() {
     flashToast('Recipe saved');
   };
 
-  // "Write it myself" — open the editor on a fresh, blank recipe.
   const writeNewRecipe = () => {
     const blank = {
       id: 'r' + Date.now(),
@@ -279,75 +310,75 @@ function App() {
   const deleteGroceryList = () =>
     askConfirm({
       title: 'Delete grocery list?',
-message: "This clears every item from your list. This can't be undone.",
-confirmLabel: 'Delete',
+      message: "This clears every item from your list. This can't be undone.",
+      confirmLabel: 'Delete',
       danger: true,
       action: () => { withActiveList(() => []); flashToast('List cleared'); },
     });
 
   const deleteGroceryLists = (ids) =>
     askConfirm({
-      title: ids.length === 1 ? 'Delete grocery list?' : `Delete ${ids.length} grocery lists?`,
+      title: ids.length === 1 ? 'Delete grocery list?' : 'Delete ' + ids.length + ' grocery lists?',
       message: "This clears every item from the selected lists. This can't be undone.",
       confirmLabel: 'Delete',
       danger: true,
       action: () => {
         setGroceryLists((ls) => ls.filter((l) => !ids.includes(l.id)));
-        flashToast(ids.length === 1 ? 'List deleted' : `${ids.length} lists deleted`);
+        flashToast(ids.length === 1 ? 'List deleted' : ids.length + ' lists deleted');
       },
     });
-    
-    const createGroceryList = () => {
-      const id = 'g' + Date.now();
-      setGroceryLists((ls) => [...ls, { id, name: 'New List', groups: [], createdAt: Date.now() }]);
-      setGroceryListId(id);
-    };
+
+  const createGroceryList = () => {
+    const id = 'g' + Date.now();
+    setGroceryLists((ls) => [...ls, { id, name: 'New List', groups: [], createdAt: Date.now() }]);
+    setGroceryListId(id);
+  };
 
   const recipeToItems = (r) =>
     ((r && r.sections) || []).flatMap((s) =>
       s.items.map((it) => ({ name: it.name, amt: it.amt, src: r.title, checked: false }))
     );
-    const addRecipeToGrocery = (fresh, targetIdOverride, freshName) => {
-      const items = recipeToItems(selected);
-      let targetId = targetIdOverride;
-  
-      if (fresh) {
-        targetId = 'g' + Date.now();
-        setGroceryLists((ls) => [
-          ...ls,
-          {
-            id: targetId,
-            name: freshName || selected.title,
-            groups: [{ aisle: 'From recipes', items }]
-          }
-        ]);
-      } else {
-        if (!targetId && groceryLists.length > 0) targetId = groceryLists[0].id;
-        if (targetId) {
-          setGroceryLists((ls) =>
-            ls.map((l) => {
-              if (l.id !== targetId) return l;
-              const base = l.groups.map((x) => ({ ...x, items: [...x.items] }));
-              let a = base.find((x) => x.aisle === 'From recipes');
-              if (!a) { a = { aisle: 'From recipes', items: [] }; base.push(a); }
-              a.items.push(...items);
-              return { ...l, groups: base };
-            })
-          );
+  const addRecipeToGrocery = (fresh, targetIdOverride, freshName) => {
+    const items = recipeToItems(selected);
+    let targetId = targetIdOverride;
+
+    if (fresh) {
+      targetId = 'g' + Date.now();
+      setGroceryLists((ls) => [
+        ...ls,
+        {
+          id: targetId,
+          name: freshName || selected.title,
+          groups: [{ aisle: 'From recipes', items }]
         }
+      ]);
+    } else {
+      if (!targetId && groceryLists.length > 0) targetId = groceryLists[0].id;
+      if (targetId) {
+        setGroceryLists((ls) =>
+          ls.map((l) => {
+            if (l.id !== targetId) return l;
+            const base = l.groups.map((x) => ({ ...x, items: [...x.items] }));
+            let a = base.find((x) => x.aisle === 'From recipes');
+            if (!a) { a = { aisle: 'From recipes', items: [] }; base.push(a); }
+            a.items.push(...items);
+            return { ...l, groups: base };
+          })
+        );
       }
-      if (targetId) setGroceryListId(targetId);
-      setOverlay(null);
-      setView('detail');
-      setTab('grocery');
-      flashToast(fresh ? `Started "${freshName || selected.title}"` : 'Added to your list');
-    };
+    }
+    if (targetId) setGroceryListId(targetId);
+    setOverlay(null);
+    setView('detail');
+    setTab('grocery');
+    flashToast(fresh ? 'Started "' + (freshName || selected.title) + '"' : 'Added to your list');
+  };
 
   const deleteAllData = () =>
     askConfirm({
       title: 'Delete all data?',
       message:
-        "Permanently removes every recipe, collection, and grocery list from this device. This can’t be undone.",
+        "Permanently removes every recipe, collection, and grocery list from this device. This can't be undone.",
       confirmLabel: 'Delete All',
       danger: true,
       action: () => {
@@ -368,7 +399,6 @@ confirmLabel: 'Delete',
     setOverlay('pickcollection');
   };
 
-  // sorted + filtered list for My Recipes
   const displayRecipes = (() => {
     let list = recipes.slice();
     if (filter === 'uncooked') list = list.filter((r) => !(r.cooked > 0));
@@ -406,7 +436,7 @@ confirmLabel: 'Delete',
           onShare={() => setOverlay('share')}
           onCook={() => {
             setCookMilestone((selected.cooked || 0) + 1);
-            setCookAtEnd(false);
+            setCookStartStep(0);
             setView('cook');
           }}
           onAdjustCooked={adjustCooked}
@@ -415,15 +445,15 @@ confirmLabel: 'Delete',
     else if (view === 'cook' && selected)
       content = (
         <CookMode
-  recipe={selected}
-  startStep={cookAtEnd ? Math.max(0, selected.steps.length - 1) : 0}
-  onExit={() => setView('detail')}
-  onDone={() => setView('done')}
-  onVoice={() => setOverlay('voice')}
-  textSize={textSize}
-  setTextSize={setTextSize}
-  onTimerUpdate={setActiveTimer}
-/>
+          recipe={selected}
+          startStep={cookStartStep}
+          onExit={() => setView('detail')}
+          onDone={() => setView('done')}
+          onVoice={() => setOverlay('voice')}
+          textSize={textSize}
+          setTextSize={setTextSize}
+          onTimerUpdate={setActiveTimer}
+        />
       );
     else if (view === 'done' && selected)
       content = (
@@ -435,7 +465,7 @@ confirmLabel: 'Delete',
           onShare={() => setOverlay('share')}
           onBack={() => setView('detail')}
           onBackToSteps={() => {
-            setCookAtEnd(true);
+            setCookStartStep(Math.max(0, selected.steps.length - 1));
             setView('cook');
           }}
         />
@@ -493,6 +523,7 @@ confirmLabel: 'Delete',
         <GroceryList
           name={activeList.name}
           data={activeList.groups}
+          createdAt={activeList.createdAt}
           onBack={() => setGroceryListId(null)}
           onToggle={toggleGroc}
           onAddItem={addGroceryItem}
@@ -502,7 +533,7 @@ confirmLabel: 'Delete',
           onDeleteList={deleteGroceryList}
           onDeleteItem={deleteGroceryItem}
           onRenameList={(newName) => setGroceryLists(ls => ls.map(l => l.id === groceryListId ? {...l, name: newName} : l))}
-/>
+        />
       ) : null;
     } else {
       content = (
@@ -526,7 +557,7 @@ confirmLabel: 'Delete',
         units={units}
         language={language}
         langLabel={(LANG_OPTS.find((l) => l.id === language) || {}).label}
-              onLanguage={() => setOverlay('language')}
+        onLanguage={() => setOverlay('language')}
         onDeleteAll={deleteAllData}
         onSignIn={() => setOverlay('signin')}
         onBackup={() => flashToast('Coming soon')}
@@ -541,15 +572,19 @@ confirmLabel: 'Delete',
       <div className="bp-app">
         {content}
         {activeTimer && !faded && (
-  <div className="bp-float-timer" onClick={() => { setCookAtEnd(false); setView('cook'); setTab('recipes'); }}>
-    <Icon name="timer" size={16} strokeWidth={2} color="var(--on-accent)" />
-    <span className="bp-float-timer-label">{activeTimer.label}</span>
-    <span className="bp-float-timer-time">
-      {String(Math.floor(activeTimer.remaining/60)).padStart(2,'0')}:{String(activeTimer.remaining%60).padStart(2,'0')}
-    </span>
-    <Icon name="chevron-right" size={14} strokeWidth={2.4} color="var(--on-accent)" />
-  </div>
-)}
+          <div className="bp-float-timer" onClick={() => {
+            setCookStartStep(_timerState.stepIndex != null ? _timerState.stepIndex : 0);
+            setTab('recipes');
+            setView('cook');
+          }}>
+            <Icon name="timer" size={16} strokeWidth={2} color="var(--on-accent)" />
+            <span className="bp-float-timer-label">{activeTimer.label}</span>
+            <span className="bp-float-timer-time">
+              {String(Math.floor(activeTimer.remaining/60)).padStart(2,'0')}:{String(activeTimer.remaining%60).padStart(2,'0')}
+            </span>
+            <Icon name="chevron-right" size={14} strokeWidth={2.4} color="var(--on-accent)" />
+          </div>
+        )}
 
         <TabBar
           active={tab}
@@ -564,15 +599,15 @@ confirmLabel: 'Delete',
       </div>
 
       <AddRecipeSheet
-  open={overlay === 'add'}
-  onClose={() => setOverlay(null)}
-  onPaste={handlePaste}
-  onScan={(file) => {
-    setOverlay(null);
-    setModal({ type: 'loading', url: file ? file.name : 'camera scan' });
-  }}
-  onWrite={writeNewRecipe}
-/>
+        open={overlay === 'add'}
+        onClose={() => setOverlay(null)}
+        onPaste={handlePaste}
+        onScan={(file) => {
+          setOverlay(null);
+          setModal({ type: 'loading', url: file ? file.name : 'camera scan' });
+        }}
+        onWrite={writeNewRecipe}
+      />
       <SignInSheet
         open={overlay === 'signin'}
         onClose={() => setOverlay(null)}
