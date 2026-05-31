@@ -160,17 +160,20 @@ function NewCollectionSheet({ open, onClose, onCreate }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('folder');
   const [photo, setPhoto] = useState(null);
+  const photoRef = useRef(null);
   useEffect(() => { if (open) { setName(''); setIcon('folder'); setPhoto(null); } }, [open]);
+  const onPhotoFile = (e) => { const f = e.target.files && e.target.files[0]; if (f) setPhoto(URL.createObjectURL(f)); e.target.value = ''; };
   const create = () => { const n = name.trim(); if (n) { onCreate(n, icon, photo); } };
   return (
     <Sheet open={open} onClose={onClose} title="New Collection">
       <div className="bp-newcoll-head">
-        <button className="bp-newcoll-preview" onClick={() => setPhoto(photo ? null : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80')} aria-label="Set cover photo">
+        <button className="bp-newcoll-preview" onClick={() => photoRef.current && photoRef.current.click()} aria-label="Set cover photo">
           {photo
             ? <img className="bp-newcoll-photo" src={photo} alt="" />
             : <Icon name={icon} size={26} strokeWidth={1.9} color="var(--accent-deep)" />}
           <span className="bp-newcoll-cam"><Icon name="camera" size={12} strokeWidth={2.2} color="var(--on-accent)" /></span>
         </button>
+        <input ref={photoRef} type="file" accept="image/*" hidden onChange={onPhotoFile} />
         <input className="bp-add-input" placeholder="Collection name" value={name}
           autoFocus onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && create()} />
