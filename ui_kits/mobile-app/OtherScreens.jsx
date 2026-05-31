@@ -13,7 +13,7 @@ const GROC_UNITS = [
   { id: 'bunch', label: 'bunch' }, { id: 'head', label: 'head' },
   { id: 'can', label: 'can' }, { id: 'bottle', label: 'bottle' },
   { id: 'pack', label: 'pack' }, { id: 'jar', label: 'jar' },
-  { id: 'other', label: 'Other…' },
+  { id: 'other', label: 'Other...' },
 ];
 
 function GroceryRow({ item, onToggle, onDelete, onEdit }) {
@@ -82,7 +82,7 @@ function GroceryRow({ item, onToggle, onDelete, onEdit }) {
       </button>
       <div
         className={'bp-groc-row' + (item.checked ? ' checked' : '')}
-        style={{ transform: `translateX(${dx}px)`, transition: startX.current == null ? 'transform 0.22s cubic-bezier(0.22,0.61,0.36,1)' : 'none' }}
+        style={{ transform: 'translateX(' + dx + 'px)', transition: startX.current == null ? 'transform 0.22s cubic-bezier(0.22,0.61,0.36,1)' : 'none' }}
         onClick={click}
         onTouchStart={e => begin(e.touches[0].clientX)}
         onTouchMove={e => move(e.touches[0].clientX)}
@@ -134,7 +134,7 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
         <h1 className="bp-h1 bp-screen-title">Grocery</h1>
         <div className="bp-subrow">
           <span className="bp-subrow-count">
-            {manage ? (picked.size > 0 ? `${picked.size} selected` : 'Select lists to delete') : `${lists.length} ${lists.length === 1 ? 'list' : 'lists'}`}
+            {manage ? (picked.size > 0 ? picked.size + ' selected' : 'Select lists to delete') : lists.length + ' ' + (lists.length === 1 ? 'list' : 'lists')}
           </span>
         </div>
         {lists.length === 0
@@ -147,8 +147,8 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
               {lists.map(l => {
                 const count = l.groups.reduce((n, g) => n + g.items.length, 0);
                 return (
-                  <button key={l.id} 
-                    className={'bp-recipe-card' + (manage && picked.has(l.id) ? ' picked' : '')} 
+                  <button key={l.id}
+                    className={'bp-recipe-card' + (manage && picked.has(l.id) ? ' picked' : '')}
                     onClick={() => manage ? togglePick(l.id) : onOpen(l)}>
                     {manage &&
                       <span className={'bp-pick-box' + (picked.has(l.id) ? ' on' : '')}>
@@ -158,9 +158,9 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
                       <div className="bp-recipe-body">
                         <div className="bp-recipe-title">{l.name}</div>
                         <div className="bp-recipe-meta">
-  {count === 0 ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}
-  {l.createdAt ? ` · ${new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : ''}
-</div>
+                          {count === 0 ? 'Empty' : count + ' ' + (count === 1 ? 'item' : 'items')}
+                          {l.createdAt ? ' · ' + new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : ''}
+                        </div>
                       </div>
                       {!manage && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
                     </div>
@@ -184,7 +184,7 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
 function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEditItem, onClearChecked, onToggleAll, onDeleteList, onDeleteItem, onRenameList }) {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(listName);
-  const nameRef = useRef(null);
+  const listNameRef = useRef(null);
   const [adding, setAdding] = useState(false);
   const [itemName, setItemName] = useState('');
   const [amt, setAmt] = useState('');
@@ -222,27 +222,26 @@ function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEdit
           <IconButton name="trash-2" onClick={onDeleteList} color={empty ? 'var(--fg3)' : undefined} />
         </div>} />
       <div className="bp-screen-pad">
-        <h1 className="bp-h1 bp-screen-title">{listName || 'Grocery List'}</h1>
         <div className="bp-subrow">
-          <span className="bp-subrow-count">{empty ? 'No items yet' : `${checked}/${all.length} items checked`}</span>
+          <span className="bp-subrow-count">{empty ? 'No items yet' : checked + '/' + all.length + ' items checked'}</span>
           {!empty && <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button>}
         </div>
 
         {editingName ? (
-  <input
-    ref={nameRef}
-    className="bp-list-name-input"
-    value={draftName}
-    onChange={e => setDraftName(e.target.value)}
-    onBlur={() => { if (draftName.trim()) { onRenameList && onRenameList(draftName.trim()); } setEditingName(false); }}
-    onKeyDown={e => { if (e.key === 'Enter') { if (draftName.trim()) onRenameList && onRenameList(draftName.trim()); setEditingName(false); } if (e.key === 'Escape') setEditingName(false); }}
-  />
-) : (
-  <h1 className="bp-h1 bp-screen-title bp-list-name-tap" onClick={() => { setDraftName(listName); setEditingName(true); setTimeout(() => nameRef.current && nameRef.current.focus(), 40); }}>
-    {listName || 'Grocery List'}
-    <Icon name="pencil" size={14} strokeWidth={2.2} color="var(--fg3)" style={{marginLeft:8}} />
-  </h1>
-)}
+          <input
+            ref={listNameRef}
+            className="bp-list-name-input"
+            value={draftName}
+            onChange={e => setDraftName(e.target.value)}
+            onBlur={() => { if (draftName.trim()) { onRenameList && onRenameList(draftName.trim()); } setEditingName(false); }}
+            onKeyDown={e => { if (e.key === 'Enter') { if (draftName.trim()) onRenameList && onRenameList(draftName.trim()); setEditingName(false); } if (e.key === 'Escape') setEditingName(false); }}
+          />
+        ) : (
+          <h1 className="bp-h1 bp-screen-title bp-list-name-tap" onClick={() => { setDraftName(listName); setEditingName(true); setTimeout(() => listNameRef.current && listNameRef.current.focus(), 40); }}>
+            {listName || 'Grocery List'}
+            <Icon name="pencil" size={14} strokeWidth={2.2} color="var(--fg3)" style={{marginLeft:8}} />
+          </h1>
+        )}
 
         {adding &&
           <div className="bp-groc-add-card">
@@ -367,7 +366,7 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, langua
 
         <div className="bp-set-group-label">Account</div>
         <div className="bp-set-card">
-        <Row icon="cloud" label="Backup" value="On device" onClick={onBackup} />
+          <Row icon="cloud" label="Backup" value="On device" onClick={onBackup} />
           <Row icon="shield" label="Privacy" onClick={onPrivacy} last />
         </div>
 
@@ -446,7 +445,7 @@ function ExtractionFailure({ url, onClose, onRetry, onScan, onWrite }) {
         <div className="bp-fail-title">This page is behind a paywall</div>
         <div className="bp-fail-sub">Try pasting the recipe text directly, or use another method.</div>
         <div className="bp-fail-opts">
-        <button className="bp-cta bp-fail-primary" onClick={onWrite}><Icon name="clipboard" size={19} strokeWidth={2} />Paste the recipe text</button>
+          <button className="bp-cta bp-fail-primary" onClick={onWrite}><Icon name="clipboard" size={19} strokeWidth={2} />Paste the recipe text</button>
           <button className="bp-fail-opt" onClick={onScan}><Icon name="camera" size={19} strokeWidth={1.9} />Scan with camera</button>
           <button className="bp-fail-opt" onClick={onWrite}><Icon name="pencil" size={18} strokeWidth={1.9} />Write it myself</button>
           <button className="bp-fail-opt" onClick={onRetry}><Icon name="rotate-ccw" size={18} strokeWidth={1.9} />Try again</button>
@@ -463,7 +462,7 @@ function SignInSheet({ open, onClose, count }) {
       <div className="bp-signin">
         <div className="bp-signin-icon"><Icon name="cloud" size={28} strokeWidth={1.8} color="var(--accent-deep)" /></div>
         <div className="bp-signin-title">Keep your recipes safe</div>
-        <div className="bp-signin-sub">You've saved {count} recipes. Sign in to keep them safe across all your devices — free forever.</div>
+        <div className="bp-signin-sub">{"You've saved " + count + " recipes. Sign in to keep them safe across all your devices — free forever."}</div>
         <button className="bp-auth apple"><Icon name="apple" size={19} strokeWidth={2} />Continue with Apple</button>
         <button className="bp-auth"><Icon name="chrome" size={19} strokeWidth={2} />Continue with Google</button>
         <button className="bp-auth"><Icon name="mail" size={19} strokeWidth={2} />Email magic link</button>
