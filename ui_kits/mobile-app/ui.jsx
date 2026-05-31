@@ -42,8 +42,8 @@ function StatusBar({ dark }) {
 function TabBar({ active, onChange, faded }) {
   const tabs = [
     { id: 'recipes', label: 'My Recipes', icon: 'notebook-text' },
-    { id: 'grocery', label: 'Grocery List', icon: 'shopping-basket' },
-    { id: 'profile', label: 'Profile', icon: 'user' },
+    { id: 'grocery', label: 'Grocery', icon: 'shopping-basket' },
+    { id: 'profile', label: 'Settings', icon: 'settings' },
   ];
   return (
     <div className="bp-tabbar" style={{ opacity: faded ? 0.04 : 1, pointerEvents: faded ? 'none' : 'auto' }}>

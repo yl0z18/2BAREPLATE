@@ -42,6 +42,7 @@ function App() {
   const [filter, setFilter] = useStored('bp-filter', 'all');
   const [tab, setTab] = useState('recipes');
   const [view, setView] = useState('list'); // list | detail | cook | done | edit
+  const [activeTimer, setActiveTimer] = useState(null); // {remaining, label, stepIndex}
   const [cookAtEnd, setCookAtEnd] = useState(false); // resume cook mode on its last step
   const [cookMilestone, setCookMilestone] = useState(1); // cook count captured when cooking starts
   const [selected, setSelected] = useState(null);
@@ -296,11 +297,11 @@ confirmLabel: 'Delete',
       },
     });
     
-  const createGroceryList = () => {
-    const id = 'g' + Date.now();
-    setGroceryLists((ls) => [...ls, { id, name: 'New List', groups: [] }]);
-    setGroceryListId(id);
-  };
+    const createGroceryList = () => {
+      const id = 'g' + Date.now();
+      setGroceryLists((ls) => [...ls, { id, name: 'New List', groups: [], createdAt: Date.now() }]);
+      setGroceryListId(id);
+    };
 
   const recipeToItems = (r) =>
     ((r && r.sections) || []).flatMap((s) =>
@@ -414,14 +415,15 @@ confirmLabel: 'Delete',
     else if (view === 'cook' && selected)
       content = (
         <CookMode
-          recipe={selected}
-          startStep={cookAtEnd ? Math.max(0, selected.steps.length - 1) : 0}
-          onExit={() => setView('detail')}
-          onDone={() => setView('done')}
-          onVoice={() => setOverlay('voice')}
-          textSize={textSize}
-          setTextSize={setTextSize}
-        />
+  recipe={selected}
+  startStep={cookAtEnd ? Math.max(0, selected.steps.length - 1) : 0}
+  onExit={() => setView('detail')}
+  onDone={() => setView('done')}
+  onVoice={() => setOverlay('voice')}
+  textSize={textSize}
+  setTextSize={setTextSize}
+  onTimerUpdate={setActiveTimer}
+/>
       );
     else if (view === 'done' && selected)
       content = (
@@ -499,7 +501,8 @@ confirmLabel: 'Delete',
           onToggleAll={setAllGroc}
           onDeleteList={deleteGroceryList}
           onDeleteItem={deleteGroceryItem}
-        />
+          onRenameList={(newName) => setGroceryLists(ls => ls.map(l => l.id === groceryListId ? {...l, name: newName} : l))}
+/>
       ) : null;
     } else {
       content = (
@@ -537,6 +540,17 @@ confirmLabel: 'Delete',
       <StatusBar dark={mode === 'dark'} />
       <div className="bp-app">
         {content}
+        {activeTimer && !faded && (
+  <div className="bp-float-timer" onClick={() => { setCookAtEnd(false); setView('cook'); setTab('recipes'); }}>
+    <Icon name="timer" size={16} strokeWidth={2} color="var(--on-accent)" />
+    <span className="bp-float-timer-label">{activeTimer.label}</span>
+    <span className="bp-float-timer-time">
+      {String(Math.floor(activeTimer.remaining/60)).padStart(2,'0')}:{String(activeTimer.remaining%60).padStart(2,'0')}
+    </span>
+    <Icon name="chevron-right" size={14} strokeWidth={2.4} color="var(--on-accent)" />
+  </div>
+)}
+
         <TabBar
           active={tab}
           onChange={(t) => {
@@ -550,12 +564,15 @@ confirmLabel: 'Delete',
       </div>
 
       <AddRecipeSheet
-        open={overlay === 'add'}
-        onClose={() => setOverlay(null)}
-        onPaste={handlePaste}
-        onScan={() => handlePaste('camera scan')}
-        onWrite={writeNewRecipe}
-      />
+  open={overlay === 'add'}
+  onClose={() => setOverlay(null)}
+  onPaste={handlePaste}
+  onScan={(file) => {
+    setOverlay(null);
+    setModal({ type: 'loading', url: file ? file.name : 'camera scan' });
+  }}
+  onWrite={writeNewRecipe}
+/>
       <SignInSheet
         open={overlay === 'signin'}
         onClose={() => setOverlay(null)}

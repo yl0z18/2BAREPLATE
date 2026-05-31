@@ -66,7 +66,7 @@ function GroceryRow({ item, onToggle, onDelete, onEdit }) {
             onChange={e => setEditAmt(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') saveEdit(); }} />
           <button className="bp-groc-add-go" onClick={saveEdit} disabled={!editName.trim()}>
-            <Icon name="check" size={18} strokeWidth={2.6} color="var(--on-accent)" />Save
+            <Icon name="check" size={16} strokeWidth={2.6} color="var(--on-accent)" />Save
           </button>
           <button className="bp-groc-edit-cancel" onClick={() => setEditing(false)}>Cancel</button>
         </div>
@@ -125,7 +125,7 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
         left={manage ? <button className="bp-link bp-nav-modebtn" onClick={exitManage}>Cancel</button> : null}
         right={manage ? null : (
           <div className="bp-nav-actions">
-            {lists.length > 0 && <button className="bp-link" onClick={() => setManage(true)}>Manage</button>}
+            {lists.length > 0 && <IconButton name="list-checks" onClick={() => setManage(true)} />}
             <IconButton name="plus" onClick={onNew} />
           </div>
         )}
@@ -157,7 +157,10 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
                     <div className="bp-recipe-tap">
                       <div className="bp-recipe-body">
                         <div className="bp-recipe-title">{l.name}</div>
-                        <div className="bp-recipe-meta">{count === 0 ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}</div>
+                        <div className="bp-recipe-meta">
+  {count === 0 ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}
+  {l.createdAt ? ` · ${new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : ''}
+</div>
                       </div>
                       {!manage && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
                     </div>
@@ -178,7 +181,10 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
   );
 }
 
-function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEditItem, onClearChecked, onToggleAll, onDeleteList, onDeleteItem }) {
+function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEditItem, onClearChecked, onToggleAll, onDeleteList, onDeleteItem, onRenameList }) {
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(listName);
+  const nameRef = useRef(null);
   const [adding, setAdding] = useState(false);
   const [itemName, setItemName] = useState('');
   const [amt, setAmt] = useState('');
@@ -221,6 +227,22 @@ function GroceryList({ name: listName, data, onBack, onToggle, onAddItem, onEdit
           <span className="bp-subrow-count">{empty ? 'No items yet' : `${checked}/${all.length} items checked`}</span>
           {!empty && <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button>}
         </div>
+
+        {editingName ? (
+  <input
+    ref={nameRef}
+    className="bp-list-name-input"
+    value={draftName}
+    onChange={e => setDraftName(e.target.value)}
+    onBlur={() => { if (draftName.trim()) { onRenameList && onRenameList(draftName.trim()); } setEditingName(false); }}
+    onKeyDown={e => { if (e.key === 'Enter') { if (draftName.trim()) onRenameList && onRenameList(draftName.trim()); setEditingName(false); } if (e.key === 'Escape') setEditingName(false); }}
+  />
+) : (
+  <h1 className="bp-h1 bp-screen-title bp-list-name-tap" onClick={() => { setDraftName(listName); setEditingName(true); setTimeout(() => nameRef.current && nameRef.current.focus(), 40); }}>
+    {listName || 'Grocery List'}
+    <Icon name="pencil" size={14} strokeWidth={2.2} color="var(--fg3)" style={{marginLeft:8}} />
+  </h1>
+)}
 
         {adding &&
           <div className="bp-groc-add-card">
@@ -303,7 +325,7 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, langua
     <div className="bp-screen-inner">
       <NavBar large />
       <div className="bp-screen-pad bp-profile">
-        <h1 className="bp-h1 bp-screen-title">Profile</h1>
+        <h1 className="bp-h1 bp-screen-title">Settings</h1>
 
         <div className="bp-profile-row" onClick={onSignIn}>
           <div className="bp-avatar"><Icon name="user" size={26} strokeWidth={1.8} color="var(--accent-deep)" /></div>
