@@ -117,7 +117,7 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
       <div
         className={'bp-groc-row' + (item.checked ? ' checked' : '')}
         style={{ transform: 'translateX(' + dx + 'px)', transition: startX.current == null ? 'transform 0.22s cubic-bezier(0.22,0.61,0.36,1)' : 'none' }}
-        onClick={click}
+        onClick={clickRow}
         onTouchStart={e => begin(e.touches[0].clientX)}
         onTouchMove={e => move(e.touches[0].clientX)}
         onTouchEnd={end}
