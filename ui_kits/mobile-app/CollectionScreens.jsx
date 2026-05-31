@@ -159,14 +159,18 @@ const COLL_ICONS = ['folder', 'utensils', 'heart', 'bookmark', 'cookie', 'soup',
 function NewCollectionSheet({ open, onClose, onCreate }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('folder');
-  useEffect(() => { if (open) { setName(''); setIcon('folder'); } }, [open]);
-  const create = () => { const n = name.trim(); if (n) { onCreate(n, icon, null); } };
+  const [photo, setPhoto] = useState(null);
+  useEffect(() => { if (open) { setName(''); setIcon('folder'); setPhoto(null); } }, [open]);
+  const create = () => { const n = name.trim(); if (n) { onCreate(n, icon, photo); } };
   return (
     <Sheet open={open} onClose={onClose} title="New Collection">
       <div className="bp-newcoll-head">
-      <div className="bp-newcoll-preview">
-          <Icon name={icon} size={26} strokeWidth={1.9} color="var(--accent-deep)" />
-        </div>
+        <button className="bp-newcoll-preview" onClick={() => setPhoto(photo ? null : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&q=80')} aria-label="Set cover photo">
+          {photo
+            ? <img className="bp-newcoll-photo" src={photo} alt="" />
+            : <Icon name={icon} size={26} strokeWidth={1.9} color="var(--accent-deep)" />}
+          <span className="bp-newcoll-cam"><Icon name="camera" size={12} strokeWidth={2.2} color="var(--on-accent)" /></span>
+        </button>
         <input className="bp-add-input" placeholder="Collection name" value={name}
           autoFocus onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && create()} />
@@ -176,8 +180,8 @@ function NewCollectionSheet({ open, onClose, onCreate }) {
       <div className="bp-icon-grid">
         {COLL_ICONS.map(ic => (
           <button key={ic} className={'bp-icon-opt' + (icon === ic ? ' sel' : '')} onClick={() => setIcon(ic)} aria-label={ic}>
-          <Icon name={ic} size={22} strokeWidth={1.9} color={icon === ic ? 'var(--accent-deep)' : 'var(--fg2)'} />
-        </button>
+            <Icon name={ic} size={22} strokeWidth={1.9} color={icon === ic ? 'var(--accent-deep)' : 'var(--fg2)'} />
+          </button>
         ))}
       </div>
       <button className="bp-cta bp-newcoll-cta" disabled={!name.trim()} onClick={create}>Create Collection</button>
