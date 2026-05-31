@@ -41,15 +41,13 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
     setDx(base.current);
     startX.current = null;
   };
-  const click = () => {
+  const clickRow = () => {
     if (moved.current) return;
     if (base.current < 0) { base.current = 0; setDx(0); return; }
-    onToggle();
+    startEdit();
   };
-  const startEdit = (e) => {
-    e.stopPropagation();
+  const startEdit = () => {
     setEditName(item.name);
-    // Split saved amt back into number + unit if possible
     const parts = (item.amt || '').trim().split(/\s+/);
     const lastWord = parts[parts.length - 1] || '';
     const matchedUnit = GROC_UNITS.find(u => u.id !== 'none' && u.id !== 'other' && u.id.toLowerCase() === lastWord.toLowerCase());
@@ -127,13 +125,10 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
         onMouseMove={e => { if (startX.current != null) move(e.clientX); }}
         onMouseUp={end}
         onMouseLeave={() => { if (startX.current != null) end(); }}>
-        <span className={'bp-check' + (item.checked ? ' on' : '')}>{item.checked && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}</span>
+        <span className={'bp-check' + (item.checked ? ' on' : '')} onClick={e => { e.stopPropagation(); onToggle(); }}>{item.checked && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}</span>
         <span className="bp-groc-name">{item.name}</span>
         <span className="bp-groc-amt">{item.amt}</span>
         <span className="bp-groc-src">{item.src}</span>
-        <button className="bp-groc-edit-btn" onClick={startEdit} aria-label={'Edit ' + item.name} tabIndex={-1}>
-          <Icon name="pencil" size={14} strokeWidth={2.2} color="var(--fg3)" />
-        </button>
       </div>
     </div>
   );
@@ -167,7 +162,7 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
         )}
       />
       <div className="bp-screen-pad">
-      <h1 className="bp-h1 bp-screen-title">Grocery List</h1>
+        <h1 className="bp-h1 bp-screen-title">Grocery List</h1>
         <div className="bp-subrow">
           <span className="bp-subrow-count">
             {manage ? (picked.size > 0 ? picked.size + ' selected' : 'Select lists to delete') : lists.length + ' ' + (lists.length === 1 ? 'list' : 'lists')}
@@ -195,7 +190,7 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
                         <div className="bp-recipe-title">{l.name}</div>
                         <div className="bp-recipe-meta">
                           {count === 0 ? 'Empty' : count + ' ' + (count === 1 ? 'item' : 'items')}
-                          {l.createdAt ? ' · ' + new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : ''}
+                          {l.createdAt ? '  ' + new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : ''}
                         </div>
                       </div>
                       {!manage && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
@@ -221,6 +216,7 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(listName);
   const listNameRef = useRef(null);
+  const [managing, setManaging] = useState(false);
   const [adding, setAdding] = useState(false);
   const [itemName, setItemName] = useState('');
   const [amt, setAmt] = useState('');
@@ -262,11 +258,14 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
         </div>} />
       <div className="bp-screen-pad">
         <div className="bp-subrow">
-        span className="bp-subrow-count">
-            {managing ? 'Tap — to remove items' : (empty ? 'No items yet' : checked + '/' + all.length + ' items checked')}
+          <span className="bp-subrow-count">
+            {managing ? 'Tap - to remove items' : (empty ? 'No items yet' : checked + '/' + all.length + ' items checked')}
           </span>
-          {!managing && !empty && <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button>}
-
+          {!managing && !empty && (
+            <div className="bp-subrow-actions">
+              {checked > 0 && <button className="bp-link bp-link-danger" onClick={onClearChecked}>Clear Checked</button>}
+              <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button></div>
+          )}
         </div>
 
         {editingName ? (
@@ -281,11 +280,9 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
         ) : (
           <h1 className="bp-h1 bp-screen-title bp-list-name-tap" onClick={() => { setDraftName(listName); setEditingName(true); setTimeout(() => listNameRef.current && listNameRef.current.focus(), 40); }}>
             {listName || 'Grocery List'}
-            <Icon name="pencil" size={14} strokeWidth={2.2} color="var(--fg3)" style={{marginLeft:8}} />
           </h1>
         )}
         {createdAt && <div className="bp-list-date">Created {new Date(createdAt).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}</div>}
-
 
         {adding &&
           <div className="bp-groc-add-card">
@@ -418,7 +415,7 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, langua
         <div className="bp-set-card">
           <Row icon="trash-2" label="Delete All Data" danger last onClick={onDeleteAll} />
         </div>
-        <div className="bp-set-foot">BarePlate · Save recipes from anywhere. Clean and simple.</div>
+        <div className="bp-set-foot">BarePlate - Save recipes from anywhere. Clean and simple.</div>
       </div>
     </div>
   );
@@ -472,7 +469,7 @@ function ExtractionLoading({ url, onCancel, onComplete }) {
             </div>
           ))}
         </div>
-        <div className="bp-extract-note"><Icon name="info" size={14} strokeWidth={2} />Video sources are transcribed — review before cooking.</div>
+        <div className="bp-extract-note"><Icon name="info" size={14} strokeWidth={2} />Video sources are transcribed - review before cooking.</div>
         <button className="bp-link bp-extract-cancel" onClick={onCancel}>Cancel</button>
       </div>
     </div>
@@ -506,7 +503,7 @@ function SignInSheet({ open, onClose, count }) {
       <div className="bp-signin">
         <div className="bp-signin-icon"><Icon name="cloud" size={28} strokeWidth={1.8} color="var(--accent-deep)" /></div>
         <div className="bp-signin-title">Keep your recipes safe</div>
-        <div className="bp-signin-sub">{"You've saved " + count + " recipes. Sign in to keep them safe across all your devices — free forever."}</div>
+        <div className="bp-signin-sub">{"You've saved " + count + " recipes. Sign in to keep them safe across all your devices - free forever."}</div>
         <button className="bp-auth apple"><Icon name="apple" size={19} strokeWidth={2} />Continue with Apple</button>
         <button className="bp-auth"><Icon name="chrome" size={19} strokeWidth={2} />Continue with Google</button>
         <button className="bp-auth"><Icon name="mail" size={19} strokeWidth={2} />Email magic link</button>

@@ -228,6 +228,9 @@ svg[data-fill='1'] {
   font-weight: 500;
 }
 
+.bp-subrow-actions { display: flex; align-items: center; gap: 14px; }
+.bp-link-danger { color: var(--danger) !important; }
+
 .bp-link {
   color: var(--accent-deep);
   font-weight: 700;
@@ -3469,8 +3472,7 @@ bp-coll-rename-btn {
 /* Grocery list name + date */
 .bp-list-name-tap { display: inline-flex; align-items: center; cursor: pointer; }
 .bp-list-name-input { font-size: 32px; font-weight: 800; color: var(--fg1); background: none; border: none; border-bottom: 2px solid var(--accent); outline: none; width: 100%; padding: 2px 0; font-family: inherit; }
-.bp-list-date { font-size: 13px; color: var(--fg3); margin-top: -6px; margin-bottom: 14px; }
-
+.bp-list-date { font-size: 13px; color: var(--fg3); margin-top: 4px; margin-bottom: 14px; }
 /* Grocery manage mode */
 .bp-groc-row-manage { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
 .bp-groc-del-inline { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
