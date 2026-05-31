@@ -23,6 +23,8 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
   const [editName, setEditName] = useState('');
   const [editAmt, setEditAmt] = useState('');
   const [editUnit, setEditUnit] = useState('none');
+  const [editCustomUnit, setEditCustomUnit] = useState('');
+  const editCustomRef = useRef(null);
   const startX = useRef(null);
   const base = useRef(0);
   const moved = useRef(false);
@@ -54,15 +56,21 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
     if (matchedUnit) {
       setEditAmt(parts.slice(0, -1).join(' '));
       setEditUnit(matchedUnit.id);
+      setEditCustomUnit('');
     } else {
       setEditAmt(item.amt || '');
       setEditUnit('none');
+      setEditCustomUnit('');
     }
     setEditing(true);
   };
+  const pickEditUnit = (v) => {
+    setEditUnit(v);
+    if (v === 'other') setTimeout(() => editCustomRef.current && editCustomRef.current.focus(), 40);
+  };
   const saveEdit = () => {
     if (!editName.trim()) return;
-    const u = editUnit !== 'none' ? editUnit : '';
+    const u = editUnit === 'other' ? editCustomUnit.trim() : (editUnit !== 'none' ? editUnit : '');
     const fullAmt = [editAmt.trim(), u].filter(Boolean).join(' ');
     onEdit(editName.trim(), fullAmt);
     setEditing(false);
@@ -94,10 +102,17 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
             onChange={e => setEditAmt(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') saveEdit(); }} />
           <div className="bp-groc-add-unit">
-            <select value={editUnit} onChange={e => setEditUnit(e.target.value)} aria-label="Unit">
-              {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
-            </select>
-            <Icon name="chevron-down" size={15} strokeWidth={2} color="var(--fg3)" />
+          {editUnit === 'other'
+              ? <input ref={editCustomRef} className="bp-groc-add-custom" placeholder="Unit" value={editCustomUnit}
+                  maxLength={12}
+                  onChange={e => setEditCustomUnit(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditUnit('none'); }} />
+              : <React.Fragment>
+                  <select value={editUnit} onChange={e => pickEditUnit(e.target.value)} aria-label="Unit">
+                    {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
+                  </select>
+                  <Icon name="chevron-down" size={15} strokeWidth={2} color="var(--fg3)" />
+                </React.Fragment>}
           </div>
         </div>
         <button className="bp-groc-save-full" onClick={saveEdit} disabled={!editName.trim()}>
@@ -135,37 +150,39 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
 }
 
 function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
-  const [manage, setManage] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
   const [picked, setPicked] = useState(() => new Set());
 
-  const exitManage = () => { setManage(false); setPicked(new Set()); };
+  const exitSelect = () => { setSelectMode(false); setPicked(new Set()); };
   const togglePick = (id) => setPicked(p => {
     const n = new Set(p);
     n.has(id) ? n.delete(id) : n.add(id);
     return n;
   });
+  const allPicked = lists.length > 0 && picked.size === lists.length;
+  const toggleAll = () => setPicked(p => p.size === lists.length ? new Set() : new Set(lists.map(l => l.id)));
 
   const runDelete = () => {
     if (onDeleteLists) onDeleteLists([...picked]);
-    exitManage();
+    exitSelect();
   };
 
   return (
     <div className="bp-screen-inner" data-screen-label="Grocery">
       <NavBar large
-        left={manage ? <button className="bp-link bp-nav-modebtn" onClick={exitManage}>Cancel</button> : null}
-        right={manage ? null : (
-          <div className="bp-nav-actions">
-            {lists.length > 0 && <IconButton name="list-checks" onClick={() => setManage(true)} />}
-            <IconButton name="plus" onClick={onNew} />
-          </div>
-        )}
+        left={selectMode ? <button className="bp-link bp-nav-modebtn" onClick={exitSelect}>Cancel</button> : null}
+        right={selectMode
+          ? <button className="bp-link bp-nav-modebtn" onClick={toggleAll}>{allPicked ? 'Deselect All' : 'Select All'}</button>
+          : <div className="bp-nav-actions">
+              {lists.length > 0 && <IconButton name="list-checks" onClick={() => setSelectMode(true)} />}
+              <IconButton name="plus" onClick={onNew} />
+            </div>}
       />
       <div className="bp-screen-pad">
         <h1 className="bp-h1 bp-screen-title">Grocery List</h1>
         <div className="bp-subrow">
           <span className="bp-subrow-count">
-            {manage ? (picked.size > 0 ? picked.size + ' selected' : 'Select lists to delete') : lists.length + ' ' + (lists.length === 1 ? 'list' : 'lists')}
+            {selectMode ? (picked.size > 0 ? picked.size + ' selected' : 'Select lists') : lists.length + ' ' + (lists.length === 1 ? 'list' : 'lists')}
           </span>
         </div>
         {lists.length === 0
@@ -179,9 +196,9 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
                 const count = l.groups.reduce((n, g) => n + g.items.length, 0);
                 return (
                   <button key={l.id}
-                    className={'bp-recipe-card' + (manage && picked.has(l.id) ? ' picked' : '')}
-                    onClick={() => manage ? togglePick(l.id) : onOpen(l)}>
-                    {manage &&
+                    className={'bp-recipe-card' + (selectMode && picked.has(l.id) ? ' picked' : '')}
+                    onClick={() => selectMode ? togglePick(l.id) : onOpen(l)}>
+                    {selectMode &&
                       <span className={'bp-pick-box' + (picked.has(l.id) ? ' on' : '')}>
                         {picked.has(l.id) && <Icon name="check" size={15} strokeWidth={3} color="var(--on-accent)" />}
                       </span>}
@@ -193,14 +210,14 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
                           {l.createdAt ? '  ' + new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : ''}
                         </div>
                       </div>
-                      {!manage && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
+                      {!selectMode && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
                     </div>
                   </button>
                 );
               })}
             </div>}
       </div>
-      {manage && (
+      {selectMode && (
         <div className="bp-bulk-bar">
           <button className="bp-bulk-btn danger" disabled={picked.size === 0} onClick={runDelete}>
             <Icon name="trash-2" size={20} strokeWidth={2} />
@@ -217,11 +234,12 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
   const [draftName, setDraftName] = useState(listName);
   const listNameRef = useRef(null);
   const [managing, setManaging] = useState(false);
-  const [adding, setAdding] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [itemName, setItemName] = useState('');
   const [amt, setAmt] = useState('');
   const [unit, setUnit] = useState('none');
   const [customUnit, setCustomUnit] = useState('');
+  const [note, setNote] = useState('');
   const customRef = useRef(null);
   const nameRef = useRef(null);
   const all = data.flatMap(g => g.items);
@@ -229,16 +247,15 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
   const empty = all.length === 0;
   const allChecked = !empty && checked === all.length;
 
-  const openAdd = () => { setAdding(true); setTimeout(() => nameRef.current && nameRef.current.focus(), 60); };
-  const closeAdd = () => { setAdding(false); setItemName(''); setAmt(''); setUnit('none'); setCustomUnit(''); };
+  const openSheet = () => { setSheetOpen(true); setTimeout(() => nameRef.current && nameRef.current.focus(), 80); };
+  const closeSheet = () => { setSheetOpen(false); setItemName(''); setAmt(''); setUnit('none'); setCustomUnit(''); setNote(''); };
   const submit = () => {
     const n = itemName.trim();
     if (!n) return;
     const u = unit === 'other' ? customUnit.trim() : (unit !== 'none' ? unit : '');
     const fullAmt = [amt.trim(), u].filter(Boolean).join(' ');
-    onAddItem(n, fullAmt);
-    setItemName(''); setAmt(''); setUnit('none'); setCustomUnit('');
-    setTimeout(() => nameRef.current && nameRef.current.focus(), 20);
+    onAddItem(n, fullAmt, note.trim());
+    closeSheet();
   };
   const pickUnit = (v) => {
     setUnit(v);
@@ -251,23 +268,8 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
         left={managing
           ? <button className="bp-link bp-nav-modebtn" onClick={() => setManaging(false)}>Done</button>
           : <button className="bp-link bp-back-link" onClick={onBack}><Icon name="chevron-left" size={20} strokeWidth={2.4} />Grocery List</button>}
-        right={managing ? null : <div className="bp-nav-actions">
-          <IconButton name="pencil" onClick={() => setManaging(true)} />
-          <IconButton name="plus" onClick={openAdd} />
-          <IconButton name="trash-2" onClick={onDeleteList} color={empty ? 'var(--fg3)' : undefined} />
-        </div>} />
+        right={managing ? <IconButton name="pencil" onClick={() => setManaging(false)} /> : null} />
       <div className="bp-screen-pad">
-        <div className="bp-subrow">
-          <span className="bp-subrow-count">
-            {managing ? 'Tap - to remove items' : (empty ? 'No items yet' : checked + '/' + all.length + ' items checked')}
-          </span>
-          {!managing && !empty && (
-            <div className="bp-subrow-actions">
-              {checked > 0 && <button className="bp-link bp-link-danger" onClick={onClearChecked}>Clear Checked</button>}
-              <button className="bp-link" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck All' : 'Check All'}</button></div>
-          )}
-        </div>
-
         {editingName ? (
           <input
             ref={listNameRef}
@@ -282,47 +284,29 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
             {listName || 'Grocery List'}
           </h1>
         )}
-        {createdAt && <div className="bp-list-date">Created {new Date(createdAt).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}</div>}
-
-        {adding &&
-          <div className="bp-groc-add-card">
-            <div className="bp-groc-add-head">
-              <span className="bp-groc-add-title">Add item</span>
-              <button className="bp-groc-add-close" onClick={closeAdd} aria-label="Close add item">
-                <Icon name="x" size={18} strokeWidth={2.4} color="var(--fg2)" />
-              </button>
+        {!managing && (
+          <div className="bp-list-meta-row">
+            {empty
+              ? <span className="bp-list-meta-txt">{createdAt ? new Date(createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' \xb7 ' : ''}No items yet</span>
+              : <span className="bp-list-meta-txt">{createdAt ? new Date(createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' \xb7 ' : ''}{checked} of {all.length} items checked</span>}
+          </div>
+        )}
+        {managing && <div className="bp-list-meta-row"><span className="bp-list-meta-txt">Tap - to remove items</span></div>}
+        {!managing && !empty && (
+          <div className="bp-groc-progress-row">
+            <div className="bp-groc-progress-bar">
+              <div className="bp-groc-progress-fill" style={{ width: (checked / all.length * 100) + '%' }}></div>
             </div>
-            <input ref={nameRef} className="bp-groc-add-name" placeholder="Item name" value={itemName}
-              onChange={e => setItemName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') closeAdd(); }} />
-            <div className="bp-groc-add-row">
-              <input className="bp-groc-add-amt" placeholder="Amount" value={amt} inputMode="decimal"
-                onChange={e => setAmt(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && submit()} />
-              <div className="bp-groc-add-unit">
-                {unit === 'other'
-                  ? <input ref={customRef} className="bp-groc-add-custom" placeholder="Unit" value={customUnit}
-                      maxLength={12}
-                      onChange={e => setCustomUnit(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setUnit('none'); }} />
-                  : <React.Fragment>
-                      <select value={unit} onChange={e => pickUnit(e.target.value)} aria-label="Measurement unit">
-                        {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
-                      </select>
-                      <Icon name="chevron-down" size={15} strokeWidth={2} color="var(--fg3)" />
-                    </React.Fragment>}
-              </div>
-              <button className="bp-groc-add-go" onClick={submit} disabled={!itemName.trim()} aria-label="Add item">
-                <Icon name="plus" size={18} strokeWidth={2.6} color="var(--on-accent)" />Add
-              </button>
-            </div>
-          </div>}
+            <span className="bp-groc-progress-count">{checked}/{all.length}</span>
+            <button className="bp-link bp-groc-progress-btn" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck all' : 'Check all'}</button>
+          </div>
+        )}
 
         {empty
           ? <div className="bp-coll-empty">
               <div className="bp-coll-tile big"><Icon name="shopping-basket" size={30} strokeWidth={1.8} color="var(--accent-deep)" /></div>
               <div className="bp-empty-title">Your list is empty</div>
-              <div className="bp-empty-sub">Add items by hand, or send ingredients here after cooking.</div>
+              <div className="bp-empty-sub">Tap + to add your first item.</div>
             </div>
           : <div className="bp-grocery">
               {data.map((g, gi) => (
@@ -335,6 +319,55 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
               ))}
             </div>}
       </div>
+
+      {!managing && (
+        <button className="bp-groc-fab" onClick={openSheet} aria-label="Add item">
+          <Icon name="plus" size={26} strokeWidth={2.2} color="#fff" />
+        </button>
+      )}
+
+      {sheetOpen && (
+        <div className="bp-scrim" onClick={closeSheet}>
+          <div className="bp-sheet bp-add-item-sheet" onClick={e => e.stopPropagation()}>
+            <div className="bp-sheet-grip"></div>
+            <div className="bp-add-item-header">
+              <button className="bp-add-item-circle-btn" onClick={closeSheet} aria-label="Cancel">
+                <Icon name="x" size={18} strokeWidth={2.4} />
+              </button>
+              <span className="bp-add-item-title">New Item</span>
+              <button className="bp-add-item-circle-btn confirm" onClick={submit} disabled={!itemName.trim()} aria-label="Add">
+                <Icon name="check" size={18} strokeWidth={2.4} />
+              </button>
+            </div>
+            <div className="bp-add-item-body">
+              <input ref={nameRef} className="bp-add-item-field" placeholder="Item name" value={itemName}
+                onChange={e => setItemName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') closeSheet(); }} />
+              <div className="bp-add-item-row">
+                <input className="bp-add-item-amt" placeholder="Qty" value={amt} inputMode="decimal"
+                  onChange={e => setAmt(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submit()} />
+                <div className="bp-groc-add-unit bp-add-item-unit">
+                  {unit === 'other'
+                    ? <input ref={customRef} className="bp-groc-add-custom" placeholder="Unit" value={customUnit}
+                        maxLength={12}
+                        onChange={e => setCustomUnit(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setUnit('none'); }} />
+                    : <React.Fragment>
+                        <select value={unit} onChange={e => pickUnit(e.target.value)} aria-label="Measurement unit">
+                          {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
+                        </select>
+                        <Icon name="chevron-down" size={15} strokeWidth={2} color="var(--fg3)" />
+                      </React.Fragment>}
+                </div>
+              </div>
+              <input className="bp-add-item-field" placeholder="Note (optional)" value={note}
+                onChange={e => setNote(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') closeSheet(); }} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
