@@ -82,40 +82,49 @@ function ShareSheet({ open, onClose, recipe, onAction }) {
 }
 
 // ---------- Edit Recipe (full screen) ----------
-function EditRecipe({ recipe, onCancel, onSave }) {
+function EditRecipe({ recipe, isNew, onCancel, onSave }) {
   const [title, setTitle] = useState(recipe.title);
-  const [source, setSource] = useState(recipe.source);
-  const [time, setTime] = useState(recipe.time);
+  const [source, setSource] = useState(recipe.source || '');
+  const [hrs, setHrs] = useState(() => {
+    const m = (recipe.time || '').match(/(\d+)\s*h/); return m ? m[1] : '';
+  });
+  const [mins, setMins] = useState(() => {
+    const m = (recipe.time || '').match(/(\d+)\s*m/); return m ? m[1] : '';
+  });
   const [serves, setServes] = useState(recipe.serves);
   const [photo, setPhoto] = useState(recipe.photo || '');
-  const [sections, setSections] = useState(() => clone(recipe.sections && recipe.sections.length ? recipe.sections : [{ label: 'Main', items: [{ name: '', amt: '' }] }]));
+  const [rating, setRating] = useState(recipe.rating || 0);
+  const [sections, setSections] = useState(() => clone(recipe.sections && recipe.sections.length ? recipe.sections : [{ label: 'Main', items: [{ name: '', amt: '', unit: 'none' }] }]));
   const [steps, setSteps] = useState(() => clone(recipe.steps && recipe.steps.length ? recipe.steps : [{ text: '', pills: [], timer: null }]));
   const photoRef = useRef(null);
+  const scanRef = useRef(null);
   const onPhotoFile = (e) => { const f = e.target.files && e.target.files[0]; if (f) setPhoto(URL.createObjectURL(f)); e.target.value = ''; };
 
+  const buildTime = () => { const h = parseInt(hrs)||0; const m = parseInt(mins)||0; if (!h && !m) return ''; return [h && h+'h', m && m+'min'].filter(Boolean).join(' '); };
 
   const setItem = (si, ii, key, val) => setSections(s => s.map((sec, i) => i !== si ? sec
     : { ...sec, items: sec.items.map((it, j) => j !== ii ? it : { ...it, [key]: val }) }));
-  const addItem = (si) => setSections(s => s.map((sec, i) => i !== si ? sec : { ...sec, items: [...sec.items, { name: '', amt: '' }] }));
+  const addItem = (si) => setSections(s => s.map((sec, i) => i !== si ? sec : { ...sec, items: [...sec.items, { name: '', amt: '', unit: 'none' }] }));
   const removeItem = (si, ii) => setSections(s => s.map((sec, i) => i !== si ? sec : { ...sec, items: sec.items.filter((_, j) => j !== ii) }));
   const setLabel = (si, val) => setSections(s => s.map((sec, i) => i !== si ? sec : { ...sec, label: val }));
-  const addSection = () => setSections(s => [...s, { label: 'New section', items: [{ name: '', amt: '' }] }]);
+  const addSection = () => setSections(s => [...s, { label: 'New Section', items: [{ name: '', amt: '', unit: 'none' }] }]);
+  const removeSection = (si) => setSections(s => s.filter((_, i) => i !== si));
 
   const setStep = (i, val) => setSteps(st => st.map((s, j) => j !== i ? s : { ...s, text: val }));
   const removeStep = (i) => setSteps(st => st.filter((_, j) => j !== i));
   const addStep = () => setSteps(st => [...st, { text: '', pills: [], timer: null }]);
 
-  const save = () => onSave({ ...recipe, title, source, time, serves, sections, steps, photo });
+  const save = () => onSave({ ...recipe, title, source, time: buildTime(), serves, sections, steps, photo, rating });
 
   return (
-    <div className="bp-screen-inner" data-screen-label="Edit Recipe">
+    <div className="bp-screen-inner" data-screen-label={isNew ? 'New Recipe' : 'Edit Recipe'}>
       <NavBar
         left={<button className="bp-link" onClick={onCancel}>Cancel</button>}
-        title="Edit Recipe"
+        title={isNew ? 'New Recipe' : 'Edit Recipe'}
         right={<button className="bp-link" onClick={save}>Save</button>} />
       <div className="bp-screen-pad bp-edit">
         <div className="bp-edit-photo">
-        {photo
+          {photo
             ? <img src={photo} alt="" onError={(e) => { e.target.style.display = 'none'; }} />
             : <div className="bp-edit-photo-ph"><BowlMark size={54} color="var(--accent)" /></div>}
           <input ref={photoRef} type="file" accept="image/*" hidden onChange={onPhotoFile} />
@@ -126,12 +135,18 @@ function EditRecipe({ recipe, onCancel, onSave }) {
 
         <div className="bp-field">
           <label className="bp-field-label">Title</label>
-          <input className="bp-field-input" value={title} onChange={e => setTitle(e.target.value)} />
+          <input className="bp-field-input" value={title} placeholder="Required" onChange={e => setTitle(e.target.value)} />
         </div>
+
         <div className="bp-field-row">
           <div className="bp-field">
-            <label className="bp-field-label">Cook time</label>
-            <input className="bp-field-input" value={time} onChange={e => setTime(e.target.value)} />
+            <label className="bp-field-label">Cook Time</label>
+            <div className="bp-time-row">
+              <input className="bp-field-input bp-time-part" type="number" min="0" max="23" placeholder="0" value={hrs} onChange={e => setHrs(e.target.value)} />
+              <span className="bp-time-unit">hr</span>
+              <input className="bp-field-input bp-time-part" type="number" min="0" max="59" placeholder="0" value={mins} onChange={e => setMins(e.target.value)} />
+              <span className="bp-time-unit">min</span>
+            </div>
           </div>
           <div className="bp-field serves">
             <label className="bp-field-label">Serves</label>
@@ -142,28 +157,61 @@ function EditRecipe({ recipe, onCancel, onSave }) {
             </div>
           </div>
         </div>
+
         <div className="bp-field">
           <label className="bp-field-label">Source</label>
-          <input className="bp-field-input" value={source} onChange={e => setSource(e.target.value)} />
+          <input className="bp-field-input" value={source} placeholder="Website, book, or person" onChange={e => setSource(e.target.value)} />
+        </div>
+
+        <div className="bp-field">
+          <label className="bp-field-label">Rating</label>
+          <div className="bp-edit-stars">
+            {[1,2,3,4,5].map(n => (
+              <button key={n} className="bp-edit-star-btn" onClick={() => setRating(rating === n ? 0 : n)} aria-label={n + ' stars'}>
+                <Icon name="star" size={28} strokeWidth={1.8}
+                  color={n <= rating ? 'var(--accent-deep)' : 'var(--border-2)'}
+                  data-fill={n <= rating ? '1' : undefined} />
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="bp-edit-section-head">Ingredients</div>
         {sections.map((sec, si) => (
           <div key={si} className="bp-edit-ing-group">
-            <input className="bp-edit-label-input" value={sec.label} onChange={e => setLabel(si, e.target.value)} placeholder="Section name" />
+            <div className="bp-edit-section-label-row">
+              <input className="bp-edit-label-input" value={sec.label} onChange={e => setLabel(si, e.target.value)} placeholder="Section name" />
+              <button className="bp-edit-section-pencil" onClick={e => e.currentTarget.previousSibling.focus()} aria-label="Rename section">
+                <Icon name="pencil" size={13} strokeWidth={2.2} color="var(--accent-deep)" />
+              </button>
+              {sections.length > 1 &&
+                <button className="bp-edit-del" onClick={() => removeSection(si)} aria-label="Remove section" style={{marginLeft: 4}}>
+                  <Icon name="minus" size={14} strokeWidth={3} color="var(--on-accent)" />
+                </button>}
+            </div>
             {sec.items.map((it, ii) => (
               <div key={ii} className="bp-edit-ing-row">
                 <button className="bp-edit-del" onClick={() => removeItem(si, ii)} aria-label="Remove ingredient">
                   <Icon name="minus" size={14} strokeWidth={3} color="var(--on-accent)" />
                 </button>
                 <input className="bp-field-input flex" value={it.name} onChange={e => setItem(si, ii, 'name', e.target.value)} placeholder="Ingredient" />
-                <input className="bp-field-input amt" value={it.amt} onChange={e => setItem(si, ii, 'amt', e.target.value)} placeholder="Amount" />
+                <input className="bp-field-input bp-ing-amt-num" value={it.amt} onChange={e => setItem(si, ii, 'amt', e.target.value)} placeholder="Qty" />
+                <div className="bp-ing-unit-wrap">
+                  <select value={it.unit || 'none'} onChange={e => setItem(si, ii, 'unit', e.target.value)}>
+                    {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
+                  </select>
+                  <Icon name="chevron-down" size={13} strokeWidth={2} color="var(--fg3)" />
+                </div>
               </div>
             ))}
-            <button className="bp-link bp-add-item" onClick={() => addItem(si)}><Icon name="plus" size={16} strokeWidth={2.2} />Add ingredient</button>
+            <button className="bp-edit-add-block" onClick={() => addItem(si)}>
+              <Icon name="plus" size={17} strokeWidth={2.2} />Add an Ingredient
+            </button>
           </div>
         ))}
-        <button className="bp-edit-add-block" onClick={addSection}><Icon name="plus" size={17} strokeWidth={2.2} />Add a section</button>
+        <button className="bp-edit-add-block" onClick={addSection}>
+          <Icon name="plus" size={17} strokeWidth={2.2} />Add a Section
+        </button>
 
         <div className="bp-edit-section-head">Steps</div>
         {steps.map((s, i) => (
@@ -175,7 +223,9 @@ function EditRecipe({ recipe, onCancel, onSave }) {
             </button>
           </div>
         ))}
-        <button className="bp-edit-add-block" onClick={addStep}><Icon name="plus" size={17} strokeWidth={2.2} />Add a step</button>
+        <button className="bp-edit-add-block" onClick={addStep}>
+          <Icon name="plus" size={17} strokeWidth={2.2} />Add a Step
+        </button>
       </div>
     </div>
   );

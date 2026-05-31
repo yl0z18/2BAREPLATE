@@ -216,7 +216,7 @@ function App() {
     const blank = {
       id: 'r' + Date.now(),
       title: '',
-      source: 'Written by you',
+      source: '',
       creator: 'You',
       time: '',
       cooked: 0,
@@ -388,6 +388,7 @@ confirmLabel: 'Delete',
       content = (
         <EditRecipe
           recipe={selected}
+          isNew={editingNew}
           onCancel={() => {
             setEditingNew(false);
             setView(editingNew ? 'list' : 'detail');

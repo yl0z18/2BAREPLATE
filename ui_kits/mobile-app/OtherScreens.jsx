@@ -361,13 +361,15 @@ function Profile({ theme, setTheme, mode, setMode, textSize, setTextSize, langua
 
 function AddRecipeSheet({ open, onClose, onPaste, onScan, onWrite }) {
   const [url, setUrl] = useState('');
+  const scanRef = useRef(null);
   return (
     <Sheet open={open} onClose={onClose} title="Add a Recipe">
       <div className="bp-add-paste">
         <input className="bp-add-input" placeholder="Paste a URL" value={url} onChange={e => setUrl(e.target.value)} />
         <button className="bp-add-go" onClick={() => onPaste(url || 'smittenkitchen.com')}>Go</button>
       </div>
-      <button className="bp-add-opt" onClick={onScan}>
+      <input ref={scanRef} type="file" accept="image/*" capture="environment" hidden onChange={e => { const f = e.target.files && e.target.files[0]; if (f) onScan(f); e.target.value = ''; }} />
+      <button className="bp-add-opt" onClick={() => scanRef.current && scanRef.current.click()}>
         <div className="bp-add-icon"><Icon name="camera" size={22} strokeWidth={1.9} color="var(--accent-deep)" /></div>
         <div className="bp-add-opt-text"><div className="t">Scan with camera</div><div className="s">Cookbook, card, or handwriting</div></div>
       </button>

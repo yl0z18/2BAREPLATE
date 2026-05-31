@@ -108,7 +108,7 @@ function CookMode({ recipe, startStep, onExit, onDone, onVoice, textSize, setTex
           <div className="bp-meanwhile">
             <div className="bp-meanwhile-label">
               <Icon name="corner-down-right" size={15} strokeWidth={2.4} />
-              While you wait, check out the next step
+              While waiting, see the next step
             </div>
             <div className="bp-meanwhile-card">
               <span className="bp-meanwhile-text">{nextStep.text}</span>
