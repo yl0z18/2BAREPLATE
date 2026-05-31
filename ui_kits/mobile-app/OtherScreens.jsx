@@ -234,27 +234,77 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
   const [draftName, setDraftName] = useState(listName);
   const listNameRef = useRef(null);
   const [managing, setManaging] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(() => new Set());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [inlineAdding, setInlineAdding] = useState(false);
+  const [inlineName, setInlineName] = useState('');
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [itemName, setItemName] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
   const [amt, setAmt] = useState('');
   const [unit, setUnit] = useState('none');
   const [customUnit, setCustomUnit] = useState('');
   const [note, setNote] = useState('');
   const customRef = useRef(null);
-  const nameRef = useRef(null);
+  const inlineRef = useRef(null);
+  const inlineRowRef = useRef(null);
+  const sheetNameRef = useRef(null);
   const all = data.flatMap(g => g.items);
   const checked = all.filter(i => i.checked).length;
   const empty = all.length === 0;
   const allChecked = !empty && checked === all.length;
 
-  const openSheet = () => { setSheetOpen(true); setTimeout(() => nameRef.current && nameRef.current.focus(), 80); };
-  const closeSheet = () => { setSheetOpen(false); setItemName(''); setAmt(''); setUnit('none'); setCustomUnit(''); setNote(''); };
-  const submit = () => {
-    const n = itemName.trim();
+  useEffect(() => {
+    if (inlineAdding && inlineRowRef.current) {
+      inlineRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [inlineAdding]);
+
+  const openInline = () => { setInlineAdding(true); setTimeout(() => inlineRef.current && inlineRef.current.focus(), 60); };
+  const closeInline = () => { setInlineAdding(false); setInlineName(''); };
+  const submitInline = () => {
+    const n = inlineName.trim();
+    if (!n) { closeInline(); return; }
+    onAddItem(n, '');
+    setInlineName('');
+    setTimeout(() => inlineRef.current && inlineRef.current.focus(), 20);
+  };
+  const openDetail = () => {
+    setEditTarget(null);
+    setSheetOpen(true);
+    setTimeout(() => sheetNameRef.current && sheetNameRef.current.focus(), 80);
+  };
+  const openDetailForItem = (gi, ii) => {
+    const item = data[gi] && data[gi].items[ii];
+    if (!item) return;
+    setEditTarget({ gi, ii });
+    setInlineName(item.name || '');
+    setAmt(item.amt || '');
+    setUnit('none');
+    setCustomUnit('');
+    setNote(item.note || '');
+    setSheetOpen(true);
+    setTimeout(() => sheetNameRef.current && sheetNameRef.current.focus(), 80);
+  };
+  const closeSheet = () => {
+    setSheetOpen(false);
+    setEditTarget(null);
+    setAmt('');
+    setUnit('none');
+    setCustomUnit('');
+    setNote('');
+  };
+  const submitSheet = () => {
+    const n = inlineName.trim();
     if (!n) return;
     const u = unit === 'other' ? customUnit.trim() : (unit !== 'none' ? unit : '');
     const fullAmt = [amt.trim(), u].filter(Boolean).join(' ');
-    onAddItem(n, fullAmt, note.trim());
+    if (editTarget) {
+      onEditItem(editTarget.gi, editTarget.ii, n, fullAmt);
+    } else {
+      onAddItem(n, fullAmt, note.trim());
+      setInlineName('');
+      closeInline();
+    }
     closeSheet();
   };
   const pickUnit = (v) => {
@@ -262,13 +312,65 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
     if (v === 'other') setTimeout(() => customRef.current && customRef.current.focus(), 40);
   };
 
+  const startManaging = () => { setSelectedItems(new Set()); setManaging(true); };
+  const stopManaging = () => { setManaging(false); setSelectedItems(new Set()); };
+  const toggleSelected = (gi, ii) => setSelectedItems(prev => {
+    const next = new Set(prev);
+    const key = gi + '-' + ii;
+    next.has(key) ? next.delete(key) : next.add(key);
+    return next;
+  });
+  const bulkMarkDone = () => {
+    selectedItems.forEach(key => {
+      const [gi, ii] = key.split('-').map(Number);
+      const item = data[gi] && data[gi].items[ii];
+      if (item && !item.checked) onToggle(gi, ii);
+    });
+    stopManaging();
+  };
+  const bulkDelete = () => {
+    const keys = [...selectedItems].sort((a, b) => {
+      const [ag, ai] = a.split('-').map(Number);
+      const [bg, bi] = b.split('-').map(Number);
+      return ag !== bg ? bg - ag : bi - ai;
+    });
+    keys.forEach(key => {
+      const [gi, ii] = key.split('-').map(Number);
+      onDeleteItem(gi, ii);
+    });
+    stopManaging();
+  };
+
   return (
-    <div className="bp-screen-inner" data-screen-label="Grocery List">
+    <div className="bp-screen-inner" data-screen-label="Grocery List" onClick={() => menuOpen && setMenuOpen(false)}>
       <NavBar large
         left={managing
-          ? <button className="bp-link bp-nav-modebtn" onClick={() => setManaging(false)}>Done</button>
+          ? <button className="bp-link bp-nav-modebtn" onClick={stopManaging}>Done</button>
           : <button className="bp-link bp-back-link" onClick={onBack}><Icon name="chevron-left" size={20} strokeWidth={2.4} />Grocery List</button>}
-        right={managing ? <IconButton name="pencil" onClick={() => setManaging(false)} /> : null} />
+        right={managing ? null : (
+          <div className="bp-nav-actions" style={{ position: 'relative' }}>
+            <button className="bp-iconbtn" onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }} aria-label="More options">
+              <Icon name="ellipsis" size={22} />
+            </button>
+            {menuOpen && (
+              <div className="bp-list-menu" onClick={e => e.stopPropagation()}>
+                <button className="bp-list-menu-item" onClick={() => { setMenuOpen(false); setDraftName(listName); setEditingName(true); setTimeout(() => listNameRef.current && listNameRef.current.focus(), 40); }}>
+                  <Icon name="pencil" size={17} strokeWidth={1.9} />Rename List
+                </button>
+                <button className="bp-list-menu-item" onClick={() => { setMenuOpen(false); startManaging(); }}>
+                  <Icon name="list-checks" size={17} strokeWidth={1.9} />Select Items
+                </button>
+                <button className="bp-list-menu-item" onClick={() => { setMenuOpen(false); window.print(); }}>
+                  <Icon name="printer" size={17} strokeWidth={1.9} />Print
+                </button>
+                <div className="bp-list-menu-divider"></div>
+                <button className="bp-list-menu-item danger" onClick={() => { setMenuOpen(false); onDeleteList && onDeleteList(); }}>
+                  <Icon name="trash-2" size={17} strokeWidth={1.9} />Delete List
+                </button>
+              </div>
+            )}
+          </div>
+        )} />
       <div className="bp-screen-pad">
         {editingName ? (
           <input
@@ -291,7 +393,11 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
               : <span className="bp-list-meta-txt">{createdAt ? new Date(createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' \xb7 ' : ''}{checked} of {all.length} items checked</span>}
           </div>
         )}
-        {managing && <div className="bp-list-meta-row"><span className="bp-list-meta-txt">Tap - to remove items</span></div>}
+        {managing && (
+          <div className="bp-list-meta-row">
+            <span className="bp-list-meta-txt">{selectedItems.size > 0 ? selectedItems.size + ' selected' : 'Tap items to select'}</span>
+          </div>
+        )}
         {!managing && !empty && (
           <div className="bp-groc-progress-row">
             <div className="bp-groc-progress-bar">
@@ -302,7 +408,7 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
           </div>
         )}
 
-        {empty
+        {empty && !inlineAdding
           ? <div className="bp-coll-empty">
               <div className="bp-coll-tile big"><Icon name="shopping-basket" size={30} strokeWidth={1.8} color="var(--accent-deep)" /></div>
               <div className="bp-empty-title">Your list is empty</div>
@@ -313,17 +419,57 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
                 <div key={gi} className="bp-aisle">
                   <div className="bp-label-row">{g.aisle}</div>
                   {g.items.map((it, ii) => (
-                    <GroceryRow key={ii} item={it} managing={managing} onToggle={() => onToggle(gi, ii)} onDelete={() => onDeleteItem(gi, ii)} onEdit={(n, a) => onEditItem(gi, ii, n, a)} />
+                    <GroceryRow
+                      key={ii}
+                      item={it}
+                      managing={managing}
+                      selected={selectedItems.has(gi + '-' + ii)}
+                      onSelect={() => toggleSelected(gi, ii)}
+                      onToggle={() => onToggle(gi, ii)}
+                      onDelete={() => onDeleteItem(gi, ii)}
+                      onEdit={(n, a) => onEditItem(gi, ii, n, a)}
+                      onOpenDetail={() => openDetailForItem(gi, ii)}
+                    />
                   ))}
                 </div>
               ))}
+              {inlineAdding && (
+                <div ref={inlineRowRef} className="bp-inline-add-row">
+                  <span className="bp-check"></span>
+                  <input
+                    ref={inlineRef}
+                    className="bp-inline-add-input"
+                    placeholder="Item name"
+                    value={inlineName}
+                    onChange={e => setInlineName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') submitInline(); if (e.key === 'Escape') closeInline(); }}
+                    onBlur={() => { if (!inlineName.trim()) closeInline(); }}
+                  />
+                  <button className="bp-inline-add-info" onMouseDown={e => e.preventDefault()} onClick={openDetail} aria-label="More details">
+                    <Icon name="info" size={20} strokeWidth={1.8} color="var(--accent)" />
+                  </button>
+                </div>
+              )}
             </div>}
       </div>
 
       {!managing && (
-        <button className="bp-groc-fab" onClick={openSheet} aria-label="Add item">
+        <button className="bp-groc-fab" onClick={openInline} aria-label="Add item">
           <Icon name="plus" size={26} strokeWidth={2.2} color="#fff" />
         </button>
+      )}
+
+      {managing && (
+        <div className="bp-bulk-bar">
+          <button className="bp-bulk-btn" disabled={selectedItems.size === 0} onClick={bulkMarkDone}>
+            <Icon name="check-circle" size={20} strokeWidth={2} />
+            Mark as Done
+          </button>
+          <button className="bp-bulk-btn danger" disabled={selectedItems.size === 0} onClick={bulkDelete}>
+            <Icon name="trash-2" size={20} strokeWidth={2} />
+            Delete
+          </button>
+        </div>
       )}
 
       {sheetOpen && (
@@ -334,25 +480,25 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
               <button className="bp-add-item-circle-btn" onClick={closeSheet} aria-label="Cancel">
                 <Icon name="x" size={18} strokeWidth={2.4} />
               </button>
-              <span className="bp-add-item-title">New Item</span>
-              <button className="bp-add-item-circle-btn confirm" onClick={submit} disabled={!itemName.trim()} aria-label="Add">
+              <span className="bp-add-item-title">{editTarget ? 'Edit Item' : 'New Item'}</span>
+              <button className="bp-add-item-circle-btn confirm" onClick={submitSheet} disabled={!inlineName.trim()} aria-label="Save">
                 <Icon name="check" size={18} strokeWidth={2.4} />
               </button>
             </div>
             <div className="bp-add-item-body">
-              <input ref={nameRef} className="bp-add-item-field" placeholder="Item name" value={itemName}
-                onChange={e => setItemName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') closeSheet(); }} />
+              <input ref={sheetNameRef} className="bp-add-item-field" placeholder="Item name" value={inlineName}
+                onChange={e => setInlineName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitSheet(); if (e.key === 'Escape') closeSheet(); }} />
               <div className="bp-add-item-row">
                 <input className="bp-add-item-amt" placeholder="Qty" value={amt} inputMode="decimal"
                   onChange={e => setAmt(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && submit()} />
+                  onKeyDown={e => e.key === 'Enter' && submitSheet()} />
                 <div className="bp-groc-add-unit bp-add-item-unit">
                   {unit === 'other'
                     ? <input ref={customRef} className="bp-groc-add-custom" placeholder="Unit" value={customUnit}
                         maxLength={12}
                         onChange={e => setCustomUnit(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setUnit('none'); }} />
+                        onKeyDown={e => { if (e.key === 'Enter') submitSheet(); if (e.key === 'Escape') setUnit('none'); }} />
                     : <React.Fragment>
                         <select value={unit} onChange={e => pickUnit(e.target.value)} aria-label="Measurement unit">
                           {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
@@ -363,7 +509,7 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
               </div>
               <input className="bp-add-item-field" placeholder="Note (optional)" value={note}
                 onChange={e => setNote(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') closeSheet(); }} />
+                onKeyDown={e => { if (e.key === 'Enter') submitSheet(); if (e.key === 'Escape') closeSheet(); }} />
             </div>
           </div>
         </div>

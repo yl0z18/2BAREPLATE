@@ -3482,7 +3482,20 @@ bp-coll-rename-btn {
 .bp-groc-progress-btn { font-size: 14px; white-space: nowrap; }
 
 /* Grocery FAB */
-.bp-groc-fab { position: absolute; bottom: 28px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.18); cursor: pointer; z-index: 10; }
+.bp-groc-fab { position: absolute; bottom: 96px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.22); cursor: pointer; z-index: 10; }
+
+/* List options menu */
+.bp-list-menu { position: absolute; top: 36px; right: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.14); min-width: 190px; z-index: 100; overflow: hidden; }
+.bp-list-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 16px; background: none; border: none; font-size: 15px; color: var(--fg1); cursor: pointer; text-align: left; font-family: inherit; }
+.bp-list-menu-item:hover { background: var(--surface-2); }
+.bp-list-menu-item.danger { color: var(--danger); }
+.bp-list-menu-divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+/* Inline add row */
+.bp-inline-add-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.bp-inline-add-input { flex: 1; background: none; border: none; outline: none; font-size: 16px; color: var(--fg1); font-family: inherit; }
+.bp-inline-add-input::placeholder { color: var(--fg3); }
+.bp-inline-add-info { background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; }
 
 /* Add item sheet */
 .bp-add-item-sheet { padding-bottom: 32px; }
