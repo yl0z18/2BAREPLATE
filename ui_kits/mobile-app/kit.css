@@ -2019,6 +2019,11 @@ bp-coll-rename-btn {
   margin-bottom: 8px;
 }
 
+.bp-recipe-card.managing:active {
+  background: var(--surface);
+  transform: none;
+}
+
 .bp-remove-btn {
   flex: 0 0 auto;
   width: 24px;
