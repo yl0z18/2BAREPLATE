@@ -283,6 +283,19 @@ confirmLabel: 'Delete',
       danger: true,
       action: () => { withActiveList(() => []); flashToast('List cleared'); },
     });
+
+  const deleteGroceryLists = (ids) =>
+    askConfirm({
+      title: ids.length === 1 ? 'Delete grocery list?' : `Delete ${ids.length} grocery lists?`,
+      message: "This clears every item from the selected lists. This can't be undone.",
+      confirmLabel: 'Delete',
+      danger: true,
+      action: () => {
+        setGroceryLists((ls) => ls.filter((l) => !ids.includes(l.id)));
+        flashToast(ids.length === 1 ? 'List deleted' : `${ids.length} lists deleted`);
+      },
+    });
+    
   const createGroceryList = () => {
     const id = 'g' + Date.now();
     setGroceryLists((ls) => [...ls, { id, name: 'New List', groups: [] }]);
@@ -293,25 +306,41 @@ confirmLabel: 'Delete',
     ((r && r.sections) || []).flatMap((s) =>
       s.items.map((it) => ({ name: it.name, amt: it.amt, src: r.title, checked: false }))
     );
-  const addRecipeToGrocery = (fresh) => {
-    const items = recipeToItems(selected);
-    const targetId = groceryListId || (groceryLists[0] && groceryLists[0].id);
-    setGroceryLists((ls) =>
-      ls.map((l) => {
-        if (l.id !== targetId) return l;
-        const base = fresh ? [] : l.groups.map((x) => ({ ...x, items: [...x.items] }));
-        let a = base.find((x) => x.aisle === 'From recipes');
-        if (!a) { a = { aisle: 'From recipes', items: [] }; base.push(a); }
-        a.items.push(...items);
-        return { ...l, groups: base };
-      })
-    );
-    setGroceryListId(targetId);
-    setOverlay(null);
-    setView('detail');
-    setTab('grocery');
-    flashToast(fresh ? 'Started a new list' : 'Added to your list');
-  };
+    const addRecipeToGrocery = (fresh, targetIdOverride, freshName) => {
+      const items = recipeToItems(selected);
+      let targetId = targetIdOverride;
+  
+      if (fresh) {
+        targetId = 'g' + Date.now();
+        setGroceryLists((ls) => [
+          ...ls,
+          {
+            id: targetId,
+            name: freshName || selected.title,
+            groups: [{ aisle: 'From recipes', items }]
+          }
+        ]);
+      } else {
+        if (!targetId && groceryLists.length > 0) targetId = groceryLists[0].id;
+        if (targetId) {
+          setGroceryLists((ls) =>
+            ls.map((l) => {
+              if (l.id !== targetId) return l;
+              const base = l.groups.map((x) => ({ ...x, items: [...x.items] }));
+              let a = base.find((x) => x.aisle === 'From recipes');
+              if (!a) { a = { aisle: 'From recipes', items: [] }; base.push(a); }
+              a.items.push(...items);
+              return { ...l, groups: base };
+            })
+          );
+        }
+      }
+      if (targetId) setGroceryListId(targetId);
+      setOverlay(null);
+      setView('detail');
+      setTab('grocery');
+      flashToast(fresh ? `Started "${freshName || selected.title}"` : 'Added to your list');
+    };
 
   const deleteAllData = () =>
     askConfirm({
@@ -477,6 +506,7 @@ confirmLabel: 'Delete',
           lists={groceryLists}
           onOpen={(l) => setGroceryListId(l.id)}
           onNew={createGroceryList}
+          onDeleteLists={deleteGroceryLists}
         />
       );
     }
@@ -583,9 +613,9 @@ confirmLabel: 'Delete',
         open={overlay === 'grocerytarget'}
         onClose={() => setOverlay(null)}
         recipe={selected}
-        count={groceryCount}
-        onAddExisting={() => addRecipeToGrocery(false)}
-        onStartNew={() => addRecipeToGrocery(true)}
+        lists={groceryLists}
+        onAddExisting={(listId) => addRecipeToGrocery(false, listId)}
+        onStartNew={(name) => addRecipeToGrocery(true, null, name)}
       />
       <ChoiceSheet
         open={overlay === 'language'}

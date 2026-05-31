@@ -217,18 +217,43 @@ function VoiceAssistantSheet({ open, onClose }) {
 }
 
 // ---------- Grocery target (Done Cooking → grocery) ----------
-function GroceryTargetSheet({ open, onClose, recipe, count, onAddExisting, onStartNew }) {
+function GroceryTargetSheet({ open, onClose, recipe, lists = [], onAddExisting, onStartNew }) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    if (open) setShowPicker(false);
+  }, [open]);
+
   return (
     <Sheet open={open} onClose={onClose} title="Add to Grocery List">
-      <div className="bp-target-sub">
-        You already have a list with {count} {count === 1 ? 'item' : 'items'}. Add the ingredients from {recipe ? recipe.title : 'this recipe'} to it, or start fresh.
-      </div>
-      <button className="bp-cta bp-sheet-cta tight" onClick={onAddExisting}>
-        <Icon name="plus" size={20} strokeWidth={2.2} />Add to existing list
-      </button>
-      <button className="bp-target-secondary" onClick={onStartNew}>
-        <Icon name="rotate-ccw" size={19} strokeWidth={1.9} />Start a new list
-      </button>
+      {!showPicker ? (
+        <React.Fragment>
+          <div className="bp-target-sub">
+            You have {lists.length} {lists.length === 1 ? 'list' : 'lists'}. Add the ingredients from {recipe ? recipe.title : 'this recipe'} to an existing list, or start fresh.
+          </div>
+          {lists.length > 0 && (
+            <button className="bp-cta bp-sheet-cta tight" onClick={() => setShowPicker(true)}>
+              <Icon name="plus" size={20} strokeWidth={2.2} />Add to existing list
+            </button>
+          )}
+          <button className={lists.length > 0 ? "bp-target-secondary" : "bp-cta bp-sheet-cta tight"} onClick={() => onStartNew(recipe.title)}>
+            <Icon name="rotate-ccw" size={19} strokeWidth={1.9} />Start a new list
+          </button>
+        </React.Fragment>
+      ) : (
+        <div className="bp-collections">
+          {lists.map(l => (
+            <button key={l.id} className="bp-coll-row" onClick={() => onAddExisting(l.id)}>
+              <span className="bp-coll-row-tile"><Icon name="shopping-basket" size={19} strokeWidth={1.9} color="var(--accent-deep)" /></span>
+              <span className="bp-coll-row-text">
+                <span className="bp-coll-row-name">{l.name}</span>
+                <span className="bp-coll-row-count">{l.groups.reduce((n, g) => n + g.items.length, 0)} items</span>
+              </span>
+              <Icon name="plus" size={18} strokeWidth={2.2} color="var(--fg3)" />
+            </button>
+          ))}
+        </div>
+      )}
     </Sheet>
   );
 }

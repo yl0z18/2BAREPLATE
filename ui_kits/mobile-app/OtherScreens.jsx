@@ -103,14 +103,39 @@ function GroceryRow({ item, onToggle, onDelete, onEdit }) {
   );
 }
 
-function GroceryHome({ lists, onOpen, onNew }) {
+function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
+  const [manage, setManage] = useState(false);
+  const [picked, setPicked] = useState(() => new Set());
+
+  const exitManage = () => { setManage(false); setPicked(new Set()); };
+  const togglePick = (id) => setPicked(p => {
+    const n = new Set(p);
+    n.has(id) ? n.delete(id) : n.add(id);
+    return n;
+  });
+
+  const runDelete = () => {
+    if (onDeleteLists) onDeleteLists([...picked]);
+    exitManage();
+  };
+
   return (
     <div className="bp-screen-inner" data-screen-label="Grocery">
-      <NavBar large right={<IconButton name="plus" onClick={onNew} />} />
+      <NavBar large
+        left={manage ? <button className="bp-link bp-nav-modebtn" onClick={exitManage}>Cancel</button> : null}
+        right={manage ? null : (
+          <div className="bp-nav-actions">
+            {lists.length > 0 && <button className="bp-link" onClick={() => setManage(true)}>Manage</button>}
+            <IconButton name="plus" onClick={onNew} />
+          </div>
+        )}
+      />
       <div className="bp-screen-pad">
         <h1 className="bp-h1 bp-screen-title">Grocery</h1>
         <div className="bp-subrow">
-          <span className="bp-subrow-count">{lists.length} {lists.length === 1 ? 'list' : 'lists'}</span>
+          <span className="bp-subrow-count">
+            {manage ? (picked.size > 0 ? `${picked.size} selected` : 'Select lists to delete') : `${lists.length} ${lists.length === 1 ? 'list' : 'lists'}`}
+          </span>
         </div>
         {lists.length === 0
           ? <div className="bp-coll-empty">
@@ -122,19 +147,33 @@ function GroceryHome({ lists, onOpen, onNew }) {
               {lists.map(l => {
                 const count = l.groups.reduce((n, g) => n + g.items.length, 0);
                 return (
-                  <button key={l.id} className="bp-recipe-card" onClick={() => onOpen(l)}>
+                  <button key={l.id} 
+                    className={'bp-recipe-card' + (manage && picked.has(l.id) ? ' picked' : '')} 
+                    onClick={() => manage ? togglePick(l.id) : onOpen(l)}>
+                    {manage &&
+                      <span className={'bp-pick-box' + (picked.has(l.id) ? ' on' : '')}>
+                        {picked.has(l.id) && <Icon name="check" size={15} strokeWidth={3} color="var(--on-accent)" />}
+                      </span>}
                     <div className="bp-recipe-tap">
                       <div className="bp-recipe-body">
                         <div className="bp-recipe-title">{l.name}</div>
                         <div className="bp-recipe-meta">{count === 0 ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}</div>
                       </div>
-                      <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />
+                      {!manage && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
                     </div>
                   </button>
                 );
               })}
             </div>}
       </div>
+      {manage && (
+        <div className="bp-bulk-bar">
+          <button className="bp-bulk-btn danger" disabled={picked.size === 0} onClick={runDelete}>
+            <Icon name="trash-2" size={20} strokeWidth={2} />
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
