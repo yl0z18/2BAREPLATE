@@ -288,12 +288,12 @@ function App() {
       a.items.push({ name, amt: amt || '', src: 'Added manually', checked: false });
       return base;
     });
-  const editGroceryItem = (gi, ii, name, amt) =>
+    const editGroceryItem = (gi, ii, name, amt, note) =>
     withActiveList((g) =>
       g.map((grp, x) =>
         x !== gi
           ? grp
-          : { ...grp, items: grp.items.map((it, y) => y !== ii ? it : { ...it, name, amt }) }
+          : { ...grp, items: grp.items.map((it, y) => y !== ii ? it : { ...it, name, amt, note: note !== undefined ? note : it.note }) }
       )
     );
   const clearChecked = () =>

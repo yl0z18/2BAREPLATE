@@ -25,6 +25,7 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, onOpenDetail, managing, 
   const base = useRef(0);
   const moved = useRef(false);
   const editRef = useRef(null);
+  const [hovered, setHovered] = useState(false);
 
   const begin = (x) => { startX.current = x; moved.current = false; };
   const move = (x) => {
@@ -89,9 +90,9 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, onOpenDetail, managing, 
   }
 
   return (
-    <div className="bp-groc-swipe">
+    <div className="bp-groc-swipe" onMouseEnter={() => setHovered(true)} onMouseLeave={() => { setHovered(false); if (startX.current != null) end(); }}>
       <button className="bp-groc-del" tabIndex={-1} aria-label={'Delete ' + item.name} onClick={onDelete}
-        style={{ opacity: dx < 0 ? 1 : 0, transition: startX.current == null ? 'opacity 0.2s' : 'none' }}>
+                style={{ opacity: dx < 0 ? 1 : 0, transition: 'opacity 0.2s' }}>
         <Icon name="trash-2" size={20} strokeWidth={2} color="#fff" />
       </button>
       <div
@@ -103,8 +104,7 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, onOpenDetail, managing, 
         onTouchEnd={end}
         onMouseDown={e => begin(e.clientX)}
         onMouseMove={e => { if (startX.current != null) move(e.clientX); }}
-        onMouseUp={end}
-        onMouseLeave={() => { if (startX.current != null) end(); }}>
+        onMouseUp={end}>
         <span className={'bp-check' + (item.checked ? ' on' : '')} onClick={e => { e.stopPropagation(); onToggle(); }}>{item.checked && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}</span>
         <span className="bp-groc-name">{item.name}</span>
         <span className="bp-groc-amt">{item.amt}</span>
