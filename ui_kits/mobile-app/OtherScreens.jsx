@@ -16,18 +16,15 @@ const GROC_UNITS = [
   { id: 'other', label: 'Other...' },
 ];
 
-function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
+function GroceryRow({ item, onToggle, onDelete, onEdit, onOpenDetail, managing, selected, onSelect }) {
   const REVEAL = 84;
   const [dx, setDx] = useState(0);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
-  const [editAmt, setEditAmt] = useState('');
-  const [editUnit, setEditUnit] = useState('none');
-  const [editCustomUnit, setEditCustomUnit] = useState('');
-  const editCustomRef = useRef(null);
   const startX = useRef(null);
   const base = useRef(0);
   const moved = useRef(false);
+  const editRef = useRef(null);
 
   const begin = (x) => { startX.current = x; moved.current = false; };
   const move = (x) => {
@@ -46,44 +43,23 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
   const clickRow = () => {
     if (moved.current) return;
     if (base.current < 0) { base.current = 0; setDx(0); return; }
-    startEdit();
-  };
-  const startEdit = () => {
     setEditName(item.name);
-    const parts = (item.amt || '').trim().split(/\s+/);
-    const lastWord = parts[parts.length - 1] || '';
-    const matchedUnit = GROC_UNITS.find(u => u.id !== 'none' && u.id !== 'other' && u.id.toLowerCase() === lastWord.toLowerCase());
-    if (matchedUnit) {
-      setEditAmt(parts.slice(0, -1).join(' '));
-      setEditUnit(matchedUnit.id);
-      setEditCustomUnit('');
-    } else {
-      setEditAmt(item.amt || '');
-      setEditUnit('none');
-      setEditCustomUnit('');
-    }
     setEditing(true);
-  };
-  const pickEditUnit = (v) => {
-    setEditUnit(v);
-    if (v === 'other') setTimeout(() => editCustomRef.current && editCustomRef.current.focus(), 40);
+    setTimeout(() => editRef.current && editRef.current.focus(), 40);
   };
   const saveEdit = () => {
-    if (!editName.trim()) return;
-    const u = editUnit === 'other' ? editCustomUnit.trim() : (editUnit !== 'none' ? editUnit : '');
-    const fullAmt = [editAmt.trim(), u].filter(Boolean).join(' ');
-    onEdit(editName.trim(), fullAmt);
+    const n = editName.trim();
+    if (n && n !== item.name) onEdit(n, item.amt);
     setEditing(false);
   };
 
   if (managing) {
     return (
-      <div className="bp-groc-row-manage">
-        <button className="bp-groc-del-inline" onClick={onDelete} aria-label={'Delete ' + item.name}>
-          <Icon name="minus-circle" size={22} strokeWidth={2} color="var(--danger)" />
-        </button>
+      <div className="bp-groc-row-manage" onClick={onSelect}>
+        <span className={'bp-pick-box' + (selected ? ' on' : '')}>
+          {selected && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}
+        </span>
         <div className={'bp-groc-row' + (item.checked ? ' checked' : '')}>
-          <span className={'bp-check' + (item.checked ? ' on' : '')}>{item.checked && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}</span>
           <span className="bp-groc-name">{item.name}</span>
           <span className="bp-groc-amt">{item.amt}</span>
         </div>
@@ -93,32 +69,21 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
 
   if (editing) {
     return (
-      <div className="bp-groc-edit-card">
-        <input className="bp-groc-add-name" value={editName} autoFocus
+      <div className="bp-inline-add-row">
+        <span className={'bp-check' + (item.checked ? ' on' : '')} onClick={e => { e.stopPropagation(); onToggle(); }}>
+          {item.checked && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}
+        </span>
+        <input
+          ref={editRef}
+          className="bp-inline-add-input"
+          value={editName}
           onChange={e => setEditName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditing(false); }} />
-        <div className="bp-groc-add-row">
-          <input className="bp-groc-add-amt" placeholder="Amount" value={editAmt}
-            onChange={e => setEditAmt(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') saveEdit(); }} />
-          <div className="bp-groc-add-unit">
-          {editUnit === 'other'
-              ? <input ref={editCustomRef} className="bp-groc-add-custom" placeholder="Unit" value={editCustomUnit}
-                  maxLength={12}
-                  onChange={e => setEditCustomUnit(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditUnit('none'); }} />
-              : <React.Fragment>
-                  <select value={editUnit} onChange={e => pickEditUnit(e.target.value)} aria-label="Unit">
-                    {GROC_UNITS.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
-                  </select>
-                  <Icon name="chevron-down" size={15} strokeWidth={2} color="var(--fg3)" />
-                </React.Fragment>}
-          </div>
-        </div>
-        <button className="bp-groc-save-full" onClick={saveEdit} disabled={!editName.trim()}>
-          <Icon name="check" size={16} strokeWidth={2.6} color="var(--on-accent)" />Save
+          onBlur={saveEdit}
+          onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditing(false); }}
+        />
+        <button className="bp-inline-add-info" onMouseDown={e => e.preventDefault()} onClick={() => { saveEdit(); onOpenDetail(); }} aria-label="More details">
+          <Icon name="info" size={20} strokeWidth={1.8} color="var(--accent)" />
         </button>
-        <button className="bp-groc-cancel-full" onClick={() => setEditing(false)}>Cancel</button>
       </div>
     );
   }
@@ -206,8 +171,7 @@ function GroceryHome({ lists, onOpen, onNew, onDeleteLists }) {
                       <div className="bp-recipe-body">
                         <div className="bp-recipe-title">{l.name}</div>
                         <div className="bp-recipe-meta">
-                          {count === 0 ? 'Empty' : count + ' ' + (count === 1 ? 'item' : 'items')}
-                          {l.createdAt ? '  ' + new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : ''}
+                                                    {l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' \xb7 ' : ''}{count === 0 ? 'Empty' : count + ' ' + (count === 1 ? 'item' : 'items')}
                         </div>
                       </div>
                       {!selectMode && <Icon name="chevron-right" size={18} strokeWidth={2} color="var(--fg3)" />}
@@ -388,8 +352,8 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
         {!managing && (
           <div className="bp-list-meta-row">
             {empty
-              ? <span className="bp-list-meta-txt">{createdAt ? new Date(createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' \xb7 ' : ''}No items yet</span>
-              : <span className="bp-list-meta-txt">{createdAt ? new Date(createdAt).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' \xb7 ' : ''}{checked} of {all.length} items checked</span>}
+                            ? <span className="bp-list-meta-txt">No items yet</span>
+                            : <span className="bp-list-meta-txt">{checked} of {all.length} items checked</span>}
           </div>
         )}
         {managing && (
