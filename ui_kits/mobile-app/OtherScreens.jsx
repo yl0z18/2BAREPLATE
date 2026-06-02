@@ -251,7 +251,6 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
   const all = data.flatMap(g => g.items);
   const checked = all.filter(i => i.checked).length;
   const empty = all.length === 0;
-  const allChecked = !empty && checked === all.length;
 
   useEffect(() => {
     if (inlineAdding && inlineRowRef.current) {
@@ -396,15 +395,6 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
         {managing && (
           <div className="bp-list-meta-row">
             <span className="bp-list-meta-txt">{selectedItems.size > 0 ? selectedItems.size + ' selected' : 'Tap items to select'}</span>
-          </div>
-        )}
-        {!managing && !empty && (
-          <div className="bp-groc-progress-row">
-            <div className="bp-groc-progress-bar">
-              <div className="bp-groc-progress-fill" style={{ width: (checked / all.length * 100) + '%' }}></div>
-            </div>
-            <span className="bp-groc-progress-count">{checked}/{all.length}</span>
-            <button className="bp-link bp-groc-progress-btn" onClick={() => onToggleAll(!allChecked)}>{allChecked ? 'Uncheck all' : 'Check all'}</button>
           </div>
         )}
 
