@@ -143,7 +143,7 @@ function GroceryRow({ item, onToggle, onDelete, onEdit, managing }) {
         <span className={'bp-check' + (item.checked ? ' on' : '')} onClick={e => { e.stopPropagation(); onToggle(); }}>{item.checked && <Icon name="check" size={14} strokeWidth={3} color="var(--on-accent)" />}</span>
         <span className="bp-groc-name">{item.name}</span>
         <span className="bp-groc-amt">{item.amt}</span>
-        <span className="bp-groc-src">{item.src}</span>
+        {item.note ? <span className="bp-groc-src">{item.note}</span> : null}
       </div>
     </div>
   );
@@ -253,8 +253,8 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
   const empty = all.length === 0;
 
   useEffect(() => {
-    if (inlineAdding && inlineRowRef.current) {
-      inlineRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (inlineAdding) {
+      setTimeout(() => inlineRowRef.current && inlineRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
     }
   }, [inlineAdding]);
 
@@ -298,7 +298,7 @@ function GroceryList({ name: listName, data, createdAt, onBack, onToggle, onAddI
     const u = unit === 'other' ? customUnit.trim() : (unit !== 'none' ? unit : '');
     const fullAmt = [amt.trim(), u].filter(Boolean).join(' ');
     if (editTarget) {
-      onEditItem(editTarget.gi, editTarget.ii, n, fullAmt);
+      onEditItem(editTarget.gi, editTarget.ii, n, fullAmt, note.trim());
     } else {
       onAddItem(n, fullAmt, note.trim());
       setInlineName('');
